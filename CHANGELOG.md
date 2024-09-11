@@ -1,5 +1,12 @@
 # @s0cks/generator-cc Changelog
 
+## [1.0.2](https://github.com/s0cks/generator-cc/compare/1.0.1...1.0.2) (2024-09-11)
+
+
+### Bug Fixes
+
+* **misc:** update .gitignore ([375eca3](https://github.com/s0cks/generator-cc/commit/375eca3a151ae44847e7e53973cded5beccc24ca))
+
 ## [1.0.1](https://github.com/s0cks/generator-cc/compare/1.0.0...1.0.1) (2024-09-11)
 
 # 1.0.0 (2024-09-11)
