@@ -6,6 +6,7 @@
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
 - [Usage](#usage)
+- [Build & Install](#build--install)
   - [Prerequisites](#prerequisites)
   - [Install Generator Locally (Optional)](#install-generator-locally-optional)
 - [Contributing](#contributing)
@@ -18,6 +19,8 @@
 # run the generator using Yeoman in the directory of your choice:
 yo @s0cks/cc
 ```
+
+## Build & Install
 
 ### Prerequisites
 
