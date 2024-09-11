@@ -383,6 +383,7 @@ export default class extends Generator {
     this._genCMakeLists({ executable: true });
     this._genCMakePresets();
     this._genCMakeScripts();
+    this._genBuildDirectory();
     if(this.options[`doxygen`])
       this._genDoxygenConfig();
     if(this.options[`cppcheck`])
