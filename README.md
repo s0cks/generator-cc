@@ -18,7 +18,8 @@
 ## Usage
 
 ```sh
-# run the generator using Yeoman in the directory of your choice:
+cd my/project/dir/
+# run the generator using Yeoman:
 yo @s0cks/cc
 ```
 
