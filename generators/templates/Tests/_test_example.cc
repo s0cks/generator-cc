@@ -2,7 +2,7 @@
 #include <glog/logging.h>
 #include "<%= main_header_path %>"
 
-namespace <% namespace %> {
+namespace <%= namespace %> {
   using namespace ::testing;
 
   class ExampleTest : public Test {
