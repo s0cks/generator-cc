@@ -40,8 +40,7 @@ npm i
 # register the generator to Yeoman:
 npm link
 # check if it worked:
-cd example/
-yo @s0cks/generator-cc
+npm run example
 ```
 
 ## Generated Project
