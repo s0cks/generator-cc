@@ -2,7 +2,7 @@
 #include <glog/logging.h>
 #include <gflags/gflags.h>
 
-#include "<%= project_name %>/<%= project_name %>.h"
+#include "<%= main_header_path %>"
 
 auto main(int argc, char** argv) -> int {
   ::google::InitGoogleLogging(argv[0]);

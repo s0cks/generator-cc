@@ -2,19 +2,19 @@
 find_package(<%= pkg.name %><%_ if (pkg.config) { %> CONFIG<% } %> <%_ if (pkg.required) { %> REQUIRED<% } %>)
 <% }) -%>
 
-file(GLOB_RECURSE <%= prefix %>_TEST_SOURCES
-  "${CMAKE_CURRENT_SOURCE_DIR}/<%= project_name %>/*.h"
-  "${CMAKE_CURRENT_SOURCE_DIR}/<%= project_name %>/*.cc"
-  "${CMAKE_CURRENT_SOURCE_DIR}/<%= project_name %>/**/*.h"
-  "${CMAKE_CURRENT_SOURCE_DIR}/<%= project_name %>/**/*.cc")
+file(GLOB_RECURSE <%= cmake_prefix %>_TEST_SOURCES
+  "${CMAKE_CURRENT_SOURCE_DIR}/<%= source_prefix %>/*.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/<%= source_prefix %>/*.cc"
+  "${CMAKE_CURRENT_SOURCE_DIR}/<%= source_prefix %>/**/*.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/<%= source_prefix %>/**/*.cc")
 
 add_executable(<%= module_name %>
   main.cc
-  ${<%= prefix %>_TEST_SOURCES})
+  ${<%= cmake_prefix %>_TEST_SOURCES})
 target_compile_options(<%= module_name %>
-  PRIVATE ${<%= prefix %>_COMPILE_OPTIONS})
+  PRIVATE ${<%= cmake_prefix %>_COMPILE_OPTIONS})
 target_link_libraries(<%= module_name %>
-  <%= lib_name -%>
+  <%= library_name -%>
   <%_ packages.forEach(function(pkg) { -%>
     <%_ if(pkg.link) { -%>
     <%_ pkg.link.forEach(function(lib) { -%>

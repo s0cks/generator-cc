@@ -1,12 +1,12 @@
-#ifndef <%= prefix %>_H
-#define <%= prefix %>_H
+#ifndef <%= header_prefix %>_H
+#define <%= header_prefix %>_H
 
 #include <string>
 #include <gflags/gflags.h>
 
-#define <%= prefix %>_VERSION_MAJOR @PROJECT_VERSION_MAJOR@
-#define <%= prefix %>_VERSION_MINOR @PROJECT_VERSION_MINOR@
-#define <%= prefix %>_VERSION_PATCH @PROJECT_VERSION_PATCH@
+#define <%= header_prefix %>_VERSION_MAJOR @PROJECT_VERSION_MAJOR@
+#define <%= header_prefix %>_VERSION_MINOR @PROJECT_VERSION_MINOR@
+#define <%= header_prefix %>_VERSION_PATCH @PROJECT_VERSION_PATCH@
 
 #define PRT_GIT_BRANCH          "@PROJECT_GIT_BRANCH@"
 #define PRT_GIT_COMMIT_HASH     "@PROJECT_GIT_COMMIT_HASH@"
@@ -15,4 +15,4 @@ namespace <%= namespace %> {
   auto GetVersion() -> std::string;
 }
 
-#endif // <%= prefix %>_H
+#endif // <%= header_prefix %>_H

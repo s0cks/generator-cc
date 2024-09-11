@@ -1,11 +1,11 @@
-configure_file(<%= project_name %>/<%= project_name %>.h.in ${PROJECT_BINARY_DIR}/Sources/<%= project_name %>/<%= project_name %>.h)
-file(GLOB_RECURSE <%= prefix %>_SOURCES
-  "${CMAKE_CURRENT_SOURCE_DIR}/<%= project_name %>/*.h"
-  "${CMAKE_CURRENT_SOURCE_DIR}/<%= project_name %>/*.cc"
-  "${CMAKE_CURRENT_SOURCE_DIR}/<%= project_name %>/**/*.h"
-  "${CMAKE_CURRENT_SOURCE_DIR}/<%= project_name %>/**/*.cc")
+configure_file(<%= main_header_path %>.in ${PROJECT_BINARY_DIR}/Sources/<%= main_header_path %>)
+file(GLOB_RECURSE <%= cmake_prefix %>_SOURCES
+  "${CMAKE_CURRENT_SOURCE_DIR}/<%= source_prefix %>/*.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/<%= source_prefix %>/*.cc"
+  "${CMAKE_CURRENT_SOURCE_DIR}/<%= source_prefix %>/**/*.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/<%= source_prefix %>/**/*.cc")
 
-list(APPEND <%= prefix %>_LIBRARIES
+list(APPEND <%= cmake_prefix %>_LIBRARIES
   <%_ packages.forEach(function(pkg) { -%>
     <%_ if(pkg.link) { -%>
     <%_ pkg.link.forEach(function(lib) { -%>
@@ -14,13 +14,13 @@ list(APPEND <%= prefix %>_LIBRARIES
     <%_ } -%>
   <%_ }) -%>)
 
-add_library(<%= lib_name -%>
-  ${PROJECT_BINARY_DIR}/Sources/<%= project_name %>/<%= project_name %>.h <%= project_name %>/<%= project_name %>.cc
-  ${<%= prefix %>_SOURCES})
+add_library(<%= library_name -%>
+  ${PROJECT_BINARY_DIR}/Sources/<%= main_header_path %>
+  ${<%= cmake_prefix %>_SOURCES})
 
-target_link_libraries(<%= lib_name -%> ${<%= prefix %>_LIBRARIES})
-target_compile_options(<%= lib_name -%>
-  PRIVATE ${<%= prefix %>_COMPILE_OPTS})
-target_include_directories(<%= lib_name -%>
+target_link_libraries(<%= library_name -%> ${<%= cmake_prefix %>_LIBRARIES})
+target_compile_options(<%= library_name -%>
+  PRIVATE ${<%= cmake_prefix %>_COMPILE_OPTS})
+target_include_directories(<%= library_name -%>
   PUBLIC ${PROJECT_SOURCE_DIR}/Sources
          ${PROJECT_BINARY_DIR}/Sources)

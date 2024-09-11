@@ -1,7 +1,7 @@
 'use string';
 import Generator from 'yeoman-generator';
 import chalk from 'chalk';
-import { existsSync, mkdirSync } from 'fs';
+import fs, { existsSync, mkdirSync } from 'fs';
 import fsextra from 'fs-extra';
 import path from 'path';
 
@@ -112,7 +112,12 @@ export default class extends Generator {
       description: "Generate executable source",
       type: Boolean,
       default: true
-    })
+    });
+    const project_name = this.options["project_name"].replace(' ', '_');
+    this._project_name_lower = project_name.toLowerCase();
+    this._source_prefix = project_name.toLowerCase();
+    this._header_prefix = project_name.toUpperCase();
+    this._namespace = project_name.toLowerCase();
   }
 
   async prompting() {
@@ -127,28 +132,61 @@ export default class extends Generator {
       },
       {
         type: `input`,
-        name: `prefix`,
+        name: `header_prefix`,
         message: `Header Prefix`,
-        default: this._getHeaderPrefix(),
+        default: this._header_prefix,
+      },
+      {
+        type: `input`,
+        name: `source_prefix`,
+        message: `Source Prefix`,
+        default: this._source_prefix,
       },
       {
         type: `input`,
         name: `namespace`,
         message: `Namespace`,
-        default: this._getNamespace(),
-      }
+        default: this._namespace,
+      },
     ]);
-  }
-
-  _getProjectName() {
-    return this.options[`project_name`];
-  }
-
-  _getHeaderPrefix() {
-    if(this.props && this.props.prefix && this.props.prefix.length > 0)
-        return this.props.prefix;
-    const prefix = this._getProjectName().toUpperCase().replace(` `, `_`);
-    return prefix;
+    const project_name = this.options[`project_name`];
+    this._root_ctx = {
+      project_name,
+      cmake_version: this.props[`cmake_version`],
+    };
+    console.log(`root context:`, this._root_ctx);
+    const source_prefix = this.props[`source_prefix`];
+    this._cpp_ctx = {
+      ...this._root_ctx,
+      header_prefix: this.props[`header_prefix`],
+      namespace: this.props[`namespace`],
+      source_prefix,
+      main_header_filename: `${this._project_name_lower}.h`,
+      main_header_path: `${source_prefix}/${this._project_name_lower}.h`,
+    };
+    console.log(`cpp context:`, this._cpp_ctx);
+    const main_header_filename = `${this._project_name_lower}.h`;
+    const library_name = `${this._project_name_lower}-core`;
+    const compile_options = this._getCompileOptions();
+    this._cmake_ctx = {
+      ...this._root_ctx,
+      header_prefix: this.props[`header_prefix`],
+      cmake_prefix: this.props[`header_prefix`], // TODO: convert this to its own property
+      source_prefix,
+      main_header_filename,
+      main_header_path: `${source_prefix}/${main_header_filename}`,
+      vcpkg: this.options[`vcpkg`],
+      rtti: this.options[`rtti`],
+      tests: this.options[`tests`],
+      benchmarks: this.options[`benchmarks`],
+      cppcheck: this.options[`cppcheck`],
+      doxygen: this.options[`doxygen`],
+      clang_format: this.options[`clang-format`],
+      vscode: this.options[`vscode`],
+      library_name,
+      compile_options,
+    };
+    console.log(`cmake ctx: `, this._cmake_ctx);
   }
 
   _getCompileOptions() {
@@ -166,46 +204,18 @@ export default class extends Generator {
       this.templatePath("_CMakeLists.txt"),
       this.destinationPath("CMakeLists.txt"),
       {
-        project_name: this._getProjectName(),
-        prefix: this._getHeaderPrefix(),
-        cmake_version: this.props.cmake_version,
+        ...this._cmake_ctx,
         packages: DEFAULT_PACKAGES,
-        compile_options: this._getCompileOptions(),
         executable: this.options[`executable`],
-        lib_name: this._getLibraryName(),
-        cppcheck: this.options["cppcheck"],
-        doxygen: this.options["doxygen"],
-        vcpkg: this.options["vcpkg"],
       }
     );
     if(this.options[`executable`]) {
       this.fs.copyTpl(
         this.templatePath(`_main.cc`),
         this.destinationPath(`main.cc`),
-        {
-          project_name: this._getProjectName(),
-          prefix: this.props[`prefix`],
-          namespace: this.props[`namespace`],
-        }
+        this._cpp_ctx,
       );
     }
-  }
-
-  _getModuleName(name) {
-    return `${this._getProjectName()}-${name}`.toLowerCase();
-  }
-
-  _getNamespace() {
-    return this.props && this.props[`namespace`]
-        ? this.props[`namespace`]
-        : this._getHeaderPrefix().toLowerCase();
-  }
-
-  _getLibraryName() {
-    let name = this._getProjectName();
-    if(this.options[`executable`])
-      name = `${name}-core`;
-    return name;
   }
 
   _genModule(tpl, packages, extra = {}) {
@@ -213,48 +223,50 @@ export default class extends Generator {
     const module_dir = path.join(process.cwd(), tpl);
     if(!existsSync(module_dir))
       mkdirSync(module_dir);
-    const project_name = this._getProjectName();
+    const project_name = this.options[`project_name`];
+    const module_name = `${project_name}-${tpl}`.toLowerCase();
     this.fs.copyTpl(
       this.templatePath(`${tpl}/_CMakeLists.txt`),
       this.destinationPath(`${tpl}/CMakeLists.txt`),
       {
-        project_name: project_name,
-        module_name: extra.module_name || this._getModuleName(tpl),
-        lib_name: this._getLibraryName(),
-        prefix: this.props.prefix,
-        cmake_version: this.props.cmake_version,
+        ...this._cmake_ctx,
+        module_name: extra.module_name || module_name,
         packages: packages,
         executable: extra.executable || false,
       }
     );
-    if(extra.executable) {
+    const main_tpl = this.templatePath(path.join(tpl, `_main.cc`));
+    if(fs.existsSync(main_tpl)) {
+      this.log(`Generating ${chalk.cyan(`main.cc`)} for ${chalk.cyan(module_name)} module....`);
       this.fs.copyTpl(
-        this.templatePath(`${tpl}/_main.cc`),
+        this.templatePath(main_tpl),
         this.destinationPath(`${tpl}/main.cc`),
-        {
-          project_name: project_name,
-          prefix: this.props[`prefix`],
-          namespace: this.props[`namespace`],
-        }
+        this._cpp_ctx,
       );
     }
-    const srcDir = path.join(module_dir, project_name);
-    if(!existsSync(srcDir))
-      mkdirSync(srcDir);
+    const srcDir = this.destinationPath(path.join(tpl, this._project_name_lower));
+    if(!fs.existsSync(srcDir)) {
+      this.log(`Creating ${chalk.gray(`source`)} directory for ${chalk.cyan(module_name)} module....`);
+      fs.mkdirSync(srcDir);
+    }
   }
 
   _copyCMakeScript(name) {
+    const script = `cmake/${name}.cmake`;
+    this.log(`Copying ${chalk.gray(script)}....`);
     this.fs.copy(
-      this.templatePath(`cmake/${name}.cmake`),
-      this.destinationPath(`cmake/${name}.cmake`),
+      this.templatePath(script),
+      this.destinationPath(script),
     );
   }
 
   _genCMakeScripts() {
-    this.log(`Generating ${chalk.cyan(`cmake/`)} scripts....`);
+    this.log(`Generating ${chalk.cyan(`CMake`)} scripts....`);
     const scriptsDir = path.join(process.cwd(), `cmake`);
-    if(!existsSync(scriptsDir))
+    if(!existsSync(scriptsDir)){
+      this.log(`Creating ${chalk.cyan(`cmake/`)} scripts directory....`);
       mkdirSync(scriptsDir);
+    }
     this._copyCMakeScript(`GitConfig`);
     if(this.options["doxygen"])
       this._copyCMakeScript(`DoxygenConfig`);
@@ -263,39 +275,31 @@ export default class extends Generator {
   _genDoxygenConfig() {
     this.log(`Generating ${chalk.cyan(`Doxygen`)} config....`);
     this._copyCMakeScript(`DoxygenConfig`);
+    const doxyfile = `Doxyfile.in`;
+    this.log(`Copuing ${chalk.gray(doxyfile)}....`);
     this.fs.copy(
-      this.templatePath(`Doxyfile.in`),
-      this.destinationPath(`Doxyfile.in`)
+      this.templatePath(doxyfile),
+      this.destinationPath(doxyfile)
     );
   }
 
   _genCppCheckConfig() {
     this.log(`Generating ${chalk.cyan("CppCheck")} config....`)
     this._copyCMakeScript(`CppCheckConfig`);
+    const suppressions = `.suppress.cppcheck`;
+    this.log(`Copying ${chalk.gray(suppressions)}....`);
     this.fs.copy(
-      this.templatePath(`.suppress.cppcheck`),
-      this.destinationPath(`.suppress.cppcheck`)
+      this.templatePath(suppressions),
+      this.destinationPath(suppressions)
     );
-  }
-
-  _getVcpkgPacakges() {
-    return []
-      .concat(DEFAULT_PACKAGES, DEFAULT_TEST_PACKAGES, DEFAULT_BM_PACKAGES)
-      .filter((pkg) => pkg.vcpkg !== null)
-      .map((pkg) => pkg.vcpkg || pkg.name.toLowerCase());
   }
 
   _genCMakePresets() {
     this.log(`Generating ${chalk.cyan(`CMakePresets.json`)}....`)
-    const project_name = this._getProjectName();
-    // project.h
     this.fs.copyTpl(
       this.templatePath(`_CMakePresets.json`),
       this.destinationPath(`CMakePresets.json`),
-      {
-        project_name: project_name,
-        vcpkg: this.options["vcpkg"],
-      }
+      this._cmake_ctx,
     );
   }
 
@@ -309,38 +313,30 @@ export default class extends Generator {
   }
 
   _genInitialCode() {
+    const createDestFilename = (extension) => {
+      return `Sources/${this.props[`source_prefix`]}/${this._project_name_lower}.${extension}`;
+    };
     this.log(`Generating initial code....`);
-    const project_name = this._getProjectName();
-    // project.h
-    this.fs.copyTpl(
-      this.templatePath(`project.h.in`),
-      this.destinationPath(`Sources/${project_name}/${project_name}.h.in`),
-      {
-        project_name: project_name,
-        prefix: this.props[`prefix`],
-        namespace: this.props[`namespace`]
-      }
-    );
-    // project.cc
-    this.fs.copyTpl(
-      this.templatePath(`project.cc`),
-      this.destinationPath(`Sources/${project_name}/${project_name}.cc`),
-      {
-        project_name: project_name,
-        prefix: this.props[`prefix`],
-        namespace: this.props[`namespace`],
-      }
-    );
+    {
+      this.fs.copyTpl(
+        this.templatePath(`project.h.in`),
+        this.destinationPath(createDestFilename(`h.in`)),
+        this._cpp_ctx,
+      );
+    }
+    {
+      this.fs.copyTpl(
+        this.templatePath(`project.cc`),
+        this.destinationPath(createDestFilename(`cc`)),
+        this._cpp_ctx,
+      );
+    }
     if(this.options[`executable`]) {
       // main.cc
       this.fs.copyTpl(
         this.templatePath(`_main.cc`),
         this.destinationPath(`main.cc`),
-        {
-          project_name: project_name,
-          prefix: this.props[`prefix`],
-          namespace: this.props[`namespace`]
-        }
+        this._cpp_ctx,
       );
     }
   }
@@ -353,16 +349,28 @@ export default class extends Generator {
     );
   }
 
+  _getVcpkgPackages() {
+    return []
+      .concat(DEFAULT_PACKAGES, DEFAULT_TEST_PACKAGES, DEFAULT_BM_PACKAGES)
+      .filter((pkg) => pkg.vcpkg !== null);
+  }
+
   _genREADME() {
     this.log(`Generating ${chalk.cyan(`README.md`)}....`);
+    const packages = this._getVcpkgPackages()
+      .map((pkg) => {
+        return {
+          name: pkg.vcpkg || pkg.name.toLowerCase(),
+          version: pkg.version,
+        };
+      });
     this.fs.copyTpl(
       this.templatePath(`_README.md`),
       this.destinationPath(`README.md`),
       {
-        project_name: this._getProjectName(),
-        packages: this._getVcpkgPacakges(),
+        ...this._root_ctx,
+        packages,
         vcpkg: this.options["vcpkg"],
-        cmake_version: this.props.cmake_version,
         executable: this.options[`executable`],
       }
     );
@@ -370,11 +378,14 @@ export default class extends Generator {
 
   _genVcpkgConfig() {
     this.log(`Generating ${chalk.cyan(`vcpkg`)} config...`);
+    const packages = this._getVcpkgPackages()
+      .map((pkg) => pkg.vcpkg || pkg.name.toLowerCase());
     this.fs.copyTpl(
       this.templatePath(`_vcpkg.json`),
       this.destinationPath(`vcpkg.json`),
       {
-        packages: this._getVcpkgPacakges(),
+        ...this._root_ctx,
+        packages,
       }
     );
   }
@@ -388,8 +399,7 @@ export default class extends Generator {
       this._genDoxygenConfig();
     if(this.options[`cppcheck`])
       this._genCppCheckConfig();
-    this._genModule(`Sources`, DEFAULT_PACKAGES, { module_name: this._getProjectName() });
-    this._genInitialCode();
+    this._genModule(`Sources`, DEFAULT_PACKAGES, { module_name: this._project_name_lower });
     if(this.options[`tests`])
       this._genModule(`Tests`, DEFAULT_TEST_PACKAGES, { executable: true });
     if(this.options[`benchmarks`])
@@ -398,6 +408,7 @@ export default class extends Generator {
       this._genVcpkgConfig();
     if(this.options[`clang-format`])
       this._genClangFormatConfig();
+    this._genInitialCode();
     this._genREADME();
   }
 
