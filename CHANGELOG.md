@@ -2,20 +2,17 @@
 
 ## [1.1.1](https://github.com/s0cks/generator-cc/compare/1.1.0...1.1.1) (2024-09-11)
 
-
 ### Bug Fixes
 
 * **generated/tests:** fix namespace in generated example test ([09a24f0](https://github.com/s0cks/generator-cc/commit/09a24f034783be15f3052ab3be5d4b3b51d7a3b4))
 
 # [1.1.0](https://github.com/s0cks/generator-cc/compare/1.0.2...1.1.0) (2024-09-11)
 
-
 ### Features
 
 * **generate/tests:** add code to generate example unit tests using GTest ([25d2210](https://github.com/s0cks/generator-cc/commit/25d2210e829f19d9572ec9f37db1714360d1823a))
 
 ## [1.0.2](https://github.com/s0cks/generator-cc/compare/1.0.1...1.0.2) (2024-09-11)
-
 
 ### Bug Fixes
 
@@ -24,7 +21,6 @@
 ## [1.0.1](https://github.com/s0cks/generator-cc/compare/1.0.0...1.0.1) (2024-09-11)
 
 # 1.0.0 (2024-09-11)
-
 
 ### Bug Fixes
 
