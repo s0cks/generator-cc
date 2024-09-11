@@ -2,6 +2,7 @@ example/*
 !/example/.gitkeep
 
 node_modules/
+package-lock.json
 
 # ignore osx DS_Store
 .DS_Store
