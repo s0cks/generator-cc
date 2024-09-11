@@ -1,5 +1,12 @@
 # @s0cks/generator-cc Changelog
 
+# [1.1.0](https://github.com/s0cks/generator-cc/compare/1.0.2...1.1.0) (2024-09-11)
+
+
+### Features
+
+* **generate/tests:** add code to generate example unit tests using GTest ([25d2210](https://github.com/s0cks/generator-cc/commit/25d2210e829f19d9572ec9f37db1714360d1823a))
+
 ## [1.0.2](https://github.com/s0cks/generator-cc/compare/1.0.1...1.0.2) (2024-09-11)
 
 
