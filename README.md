@@ -47,6 +47,10 @@ npm run example
 
 See [example/](/example/)
 
+## Changelog
+
+See [CHANGELOG.md](/CHANGELOG.md)
+
 ## License
 
 See [LICENSE](/LICENSE)

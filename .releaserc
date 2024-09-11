@@ -22,7 +22,7 @@
       "@semantic-release/changelog",
       {
         "changelogFile": "CHANGELOG.md",
-        "changelogTitle": "# @s0cks/generator-cc Changelog"
+        "changelogTitle": "# Changelog"
       }
     ],
     [
