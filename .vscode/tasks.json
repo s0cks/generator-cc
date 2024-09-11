@@ -2,10 +2,40 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"type": "shell",
-			"command": "npm run test",
+			"type": "npm",
+			"label": "npm: run example",
+			"script": "example",
 			"problemMatcher": [],
-			"label": "npm test"
+			"detail": "install dependencies from package"
+		},
+		{
+			"type": "shell",
+			"label": "Configure example Project",
+			"command": "cd ${workspaceFolder}/example/build && cd ${workspaceFolder}/example/build && cmake --preset debug-osx-arm64 ..",
+			"problemMatcher": [],
+			"detail": "Configure the example project"
+		},
+		{
+			"type": "shell",
+			"label": "Build example Project",
+			"command": "cd ${workspaceFolder}/example/build && cmake --build .",
+			"problemMatcher": [],
+			"detail": "Build the example project",
+			"dependsOn": [
+				"npm: run example",
+				"Configure example Project",
+			],
+			"dependsOrder": "sequence"
+		},
+		{
+			"type": "shell",
+			"label": "Run example Project",
+			"command": "cd ${workspaceFolder}/example/build && ./example --logtostdout",
+			"problemMatcher": [],
+			"detail": "Run the example project",
+			"dependsOn": [
+				"Build example Project",
+			]
 		}
 	]
 }
