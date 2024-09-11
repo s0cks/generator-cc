@@ -4,6 +4,8 @@ example/*
 node_modules/
 package-lock.json
 
+.env*
+
 # ignore osx DS_Store
 .DS_Store
 ._.DS_Store
