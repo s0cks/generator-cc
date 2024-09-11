@@ -31,3 +31,7 @@ npm link
 # run the generator using Yeoman:
 yo @s0cks/cc
 ```
+
+## Contributing
+
+See [CONTRIBUTING.md](/CONTRIBUTING.md).
