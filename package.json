@@ -6,7 +6,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start:dev": "cd test/ && yo cc --force"
+    "test": "cd test/ && yo @s0cks/cc --force"
   },
   "repository": {
     "type": "git",

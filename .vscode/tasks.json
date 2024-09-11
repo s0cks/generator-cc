@@ -3,9 +3,9 @@
 	"tasks": [
 		{
 			"type": "shell",
-			"command": "npm run start:dev",
+			"command": "npm run test",
 			"problemMatcher": [],
-			"label": "npm start:dev"
+			"label": "npm test"
 		}
 	]
 }
