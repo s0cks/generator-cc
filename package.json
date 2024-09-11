@@ -1,5 +1,5 @@
 {
-  "name": "generator-cc",
+  "name": "@s0cks/generator-cc",
   "private": true,
   "version": "0.0.0",
   "description": "Generate c++ projects using yeoman",
