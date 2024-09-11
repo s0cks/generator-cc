@@ -1,5 +1,5 @@
-test/*
-!/test/.gitkeep
+example/*
+!/example/.gitkeep
 
 node_modules/
 

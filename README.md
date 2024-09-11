@@ -14,7 +14,7 @@
 ## Usage
 
 ```sh
-# run the generator using Yeoman:
+# run the generator using Yeoman in the directory of your choice:
 yo @s0cks/cc
 ```
 
@@ -32,6 +32,9 @@ git clone https://github.com:s0cks/generator-cc
 npm i
 # register the generator to Yeoman:
 npm link
+# check if it worked:
+cd example/
+yo @s0cks/generator-cc
 ```
 
 ## Contributing
