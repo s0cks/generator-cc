@@ -9,6 +9,8 @@
 - [Build & Install](#build--install)
   - [Prerequisites](#prerequisites)
   - [Install Generator Locally (Optional)](#install-generator-locally-optional)
+- [Generated Project](#generated-project)
+- [License](#license)
 - [Contributing](#contributing)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -40,6 +42,14 @@ npm link
 cd example/
 yo @s0cks/generator-cc
 ```
+
+## Generated Project
+
+See [example/](/example/)
+
+## License
+
+See [LICENSE](/LICENSE)
 
 ## Contributing
 
