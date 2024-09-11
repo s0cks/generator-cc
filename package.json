@@ -6,7 +6,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "example": "cd example/ && yo @s0cks/cc --force"
+    "example": "cd example/ && yo @s0cks/cc example --force"
   },
   "repository": {
     "type": "git",
@@ -18,7 +18,7 @@
     "c++"
   ],
   "author": "@s0cks",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "dependencies": {
     "chalk": "^5.3.0",
     "fs-extra": "^11.2.0",

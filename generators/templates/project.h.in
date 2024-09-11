@@ -8,10 +8,8 @@
 #define <%= prefix %>_VERSION_MINOR @PROJECT_VERSION_MINOR@
 #define <%= prefix %>_VERSION_PATCH @PROJECT_VERSION_PATCH@
 
-<%_ if(git) { %>
 #define PRT_GIT_BRANCH          "@PROJECT_GIT_BRANCH@"
 #define PRT_GIT_COMMIT_HASH     "@PROJECT_GIT_COMMIT_HASH@"
-<%_ } %>
 
 namespace <%= namespace %> {
   auto GetVersion() -> std::string;
