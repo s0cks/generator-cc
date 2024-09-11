@@ -339,6 +339,13 @@ export default class extends Generator {
         this._cpp_ctx,
       );
     }
+    if(this.options[`tests`]) {
+      this.fs.copyTpl(
+        this.templatePath(`Tests/_test_example.cc`),
+        this.destinationPath(`Tests/${this._project_name_lower}/test_${this._project_name_lower}.cc`),
+        this._cpp_ctx,
+      );
+    }
   }
 
   _genClangFormatConfig() {
