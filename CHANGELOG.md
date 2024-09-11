@@ -1,5 +1,12 @@
 # @s0cks/generator-cc Changelog
 
+## [1.1.1](https://github.com/s0cks/generator-cc/compare/1.1.0...1.1.1) (2024-09-11)
+
+
+### Bug Fixes
+
+* **generated/tests:** fix namespace in generated example test ([09a24f0](https://github.com/s0cks/generator-cc/commit/09a24f034783be15f3052ab3be5d4b3b51d7a3b4))
+
 # [1.1.0](https://github.com/s0cks/generator-cc/compare/1.0.2...1.1.0) (2024-09-11)
 
 
