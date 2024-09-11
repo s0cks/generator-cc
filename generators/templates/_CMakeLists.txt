@@ -1,0 +1,54 @@
+cmake_minimum_required(VERSION <%= cmake_version %>})
+project(<%= project_name %>)
+
+set(PROJECT_VERSION_MAJOR 0)
+set(PROJECT_VERSION_MINOR 0)
+set(PROJECT_VERSION_PATCH 0)
+
+include(GitConfig)
+<%_ if(doxygen) { -%>
+include(DoxygenConfig)
+<%_ } -%>
+<%_ if(cppcheck) { -%>
+include(CppCheckConfig)
+<%_ } -%>
+
+<% packages.forEach(function(pkg) { -%>
+find_package(<%= pkg.name %><%_ if (pkg.config) { %> CONFIG<% } %> <%_ if (pkg.required) { %> REQUIRED<% } %>)
+<% }) -%>
+
+if(CMAKE_BUILD_TYPE MATCHES "^[Dd]ebug")
+  add_compile_definitions(<%= prefix %>_DEBUG)
+elseif(CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
+  <%_ if(doxygen) { -%>
+  include(DoxygenConfig)
+  <%_ } -%>
+  <%_ if(cppcheck) { -%>
+  include(CppCheckConfig)
+  <%_ } -%>
+endif()
+
+list(APPEND <%= prefix %>_COMPILE_OPTS
+  <%_ compile_options.forEach(function(opt) { -%>
+  <%- opt -%>
+  <%_ }) -%>)
+
+link_libraries(
+  <%_ packages.forEach(function(pkg) { -%>
+    <%_ if(pkg.link) { -%>
+    <%_ pkg.link.forEach(function(lib) { -%>
+  <%= lib -%>
+    <%_ }) -%>
+    <%_ } -%>
+  <%_ }) -%>)
+
+add_subdirectory(Sources)
+add_subdirectory(Tests)
+add_subdirectory(Benchmarks)
+
+<%_ if(executable) { %>
+add_executable(<%= project_name %>
+  main.cc)
+target_link_libraries(<%= project_name %>
+  <%= lib_name -%>)
+<%_ } %>

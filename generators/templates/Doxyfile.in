@@ -1,0 +1,4 @@
+OUTPUT_DIRECTORY       = @CMAKE_CURRENT_BINARY_DIR@/doxygen/
+INPUT                  = @CMAKE_SOURCE_DIR@/Sources/
+PROJECT_NAME           = @PROJECT_NAME@
+RECURSIVE              = true

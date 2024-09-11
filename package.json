@@ -1,0 +1,27 @@
+{
+  "name": "generator-cc",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Generate c++ projects using yeoman",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start:dev": "cd test/ && yo cc --force"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/s0cks/generator-cc"
+  },
+  "keywords": [
+    "yeoman",
+    "yeoman-generator",
+    "c++"
+  ],
+  "author": "@s0cks",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "fs-extra": "^11.2.0",
+    "yeoman-generator": "^7.3.2"
+  }
+}

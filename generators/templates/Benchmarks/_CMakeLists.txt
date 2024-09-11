@@ -1,0 +1,15 @@
+<% packages.forEach(function(pkg) { -%>
+find_package(<%= pkg.name %><%_ if (pkg.config) { %> CONFIG<% } %> <%_ if (pkg.required) { %> REQUIRED<% } %>)
+<% }) -%>
+
+add_executable(<%= module_name %>
+  main.cc)
+target_link_libraries(<%= module_name %>
+  <%= lib_name -%>
+  <%_ packages.forEach(function(pkg) { -%>
+    <%_ if(pkg.link) { -%>
+    <%_ pkg.link.forEach(function(lib) { -%>
+  <%- lib -%>
+    <%_ }) -%>
+    <%_ } -%>
+  <%_ }) -%>)

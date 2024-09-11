@@ -1,0 +1,119 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 23,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_MODULE_PATH": {
+          "value": "${sourceDir}/cmake",
+          "type": "FILEPATH"
+        },
+        <%_ if(vcpkg) { -%>
+        "CMAKE_TOOLCHAIN_FILE": {
+          "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+          "type": "FILEPATH"
+        },
+        <%_ } -%>
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_C_STANDARD": "11",
+        "CMAKE_C_STANDARD_REQUIRED": "ON",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_STANDARD": "20",
+        "CMAKE_CXX_STANDARD_REQUIRED": "ON",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_CXX_EXTENSIONS": "OFF"
+      }
+    },
+    {
+      "name": "base-osx-arm64",
+      "hidden": true,
+      "vendor": {
+        "microsoft.com/VisualStudioSettings/CMake/1.0": {
+          "intelliSenseMode": "ios-clang-arm64",
+          "hostOS": "macOS"
+        }
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      }
+    },
+    {
+      "name": "dbg",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": {
+          "value": "Debug",
+          "type": "STRING"
+        }
+      },
+      "environment": {
+        "BUILD_ENVIRONMENT": "dev"
+      }
+    },
+    {
+      "name": "debug-osx-arm64",
+      "displayName": "Debug (OSX/arm64)",
+      "inherits": [
+        "base",
+        "dbg"
+      ]
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug",
+      "inherits": [
+        "base",
+        "dbg"
+      ]
+    },
+    {
+      "name": "rel",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": {
+          "value": "Release",
+          "type": "STRING"
+        }
+      },
+      "environment": {
+        "BUILD_ENVIRONMENT": "release"
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Release",
+      "inherits": [
+        "base",
+        "rel"
+      ]
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "debug-osx-arm64",
+      "displayName": "Debug (Darwin/arm64)",
+      "configurePreset": "debug-osx-arm64"
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "release",
+      "displayName": "Release",
+      "configurePreset": "release",
+      "cleanFirst": true
+    }
+  ]
+}

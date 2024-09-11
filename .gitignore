@@ -1,0 +1,10 @@
+test/*
+!/test/.gitkeep
+
+node_modules/
+
+# ignore osx DS_Store
+.DS_Store
+._.DS_Store
+**/.DS_Store
+**/._.DS_Store

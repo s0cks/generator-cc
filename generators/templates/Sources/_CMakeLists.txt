@@ -1,0 +1,26 @@
+configure_file(<%= project_name %>/<%= project_name %>.h.in ${PROJECT_BINARY_DIR}/Sources/<%= project_name %>/<%= project_name %>.h)
+file(GLOB_RECURSE <%= prefix %>_SOURCES
+  "${CMAKE_CURRENT_SOURCE_DIR}/<%= project_name %>/*.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/<%= project_name %>/*.cc"
+  "${CMAKE_CURRENT_SOURCE_DIR}/<%= project_name %>/**/*.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/<%= project_name %>/**/*.cc")
+
+list(APPEND <%= prefix %>_LIBRARIES
+  <%_ packages.forEach(function(pkg) { -%>
+    <%_ if(pkg.link) { -%>
+    <%_ pkg.link.forEach(function(lib) { -%>
+  <%- lib -%>
+    <%_ }) -%>
+    <%_ } -%>
+  <%_ }) -%>)
+
+add_library(<%= lib_name -%>
+  ${PROJECT_BINARY_DIR}/Sources/<%= project_name %>/<%= project_name %>.h <%= project_name %>/<%= project_name %>.cc
+  ${<%= prefix %>_SOURCES})
+
+target_link_libraries(<%= lib_name -%> ${<%= prefix %>_LIBRARIES})
+target_compile_options(<%= lib_name -%>
+  PRIVATE ${<%= prefix %>_COMPILE_OPTS})
+target_include_directories(<%= lib_name -%>
+  PUBLIC ${PROJECT_SOURCE_DIR}/Sources
+         ${PROJECT_BINARY_DIR}/Sources)
