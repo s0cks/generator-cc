@@ -5,9 +5,10 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-- [Build & Install](#build--install)
-  - [Prerequisites](#prerequisites)
 - [Usage](#usage)
+  - [Prerequisites](#prerequisites)
+  - [Install Generator Locally (Optional)](#install-generator-locally-optional)
+- [Contributing](#contributing)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
