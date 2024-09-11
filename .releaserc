@@ -1,5 +1,8 @@
 {
-  "branches": "main",
+  "branches": [
+    "main",
+    "develop"
+  ],
   "debug": "false",
   "tagFormat": "${version}",
   "plugins": [
