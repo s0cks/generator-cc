@@ -1,8 +1,6 @@
 # generator-cc
 
-`
-Yeoman generator for creating a modern C++ project using cmake, vcpkg, glog, gflags & more. Allowing you to quickly set up a project following best practices
-`
+> Yeoman generator for creating a modern C++ project using cmake, vcpkg, glog, gflags & more. Allowing you to quickly set up a project following best practices
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
