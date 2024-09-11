@@ -32,11 +32,13 @@ Check whether or not the build was successful:
 ```
 
 <%_ if(executable) { -%>
+
 ## Running
 
 ```bash
 <%= project_name %> --help
 ```
+
 <%_ } -%>
 
 ## Packages
