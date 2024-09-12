@@ -5,7 +5,7 @@ namespace <%= namespace %> {
 <%_ switch(standard) {
     case `03`:
     case `11`: -%>
-  std::string GetVersion();
+  std::string GetVersion() {
 <%_    break;
     default: -%>
   auto GetVersion() -> std::string {
