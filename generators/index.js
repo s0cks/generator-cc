@@ -211,6 +211,7 @@ export default class extends Generator {
       source_prefix,
       main_header_filename: `${this._project_name_lower}.h`,
       main_header_path: `${source_prefix}/${this._project_name_lower}.h`,
+      standard: cpp_standard,
     };
     const main_header_filename = `${this._project_name_lower}.h`;
     const library_name = `${this._project_name_lower}-core`;

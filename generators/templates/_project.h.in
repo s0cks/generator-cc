@@ -12,7 +12,15 @@
 #define PRT_GIT_COMMIT_HASH     "@PROJECT_GIT_COMMIT_HASH@"
 
 namespace <%= namespace %> {
+<%_ switch(standard) {
+    case `03`:
+    case `11`: -%>
+  std::string GetVersion();
+<%_    break;
+    default: -%>
   auto GetVersion() -> std::string;
+   <%_ break;
+} -%>
 }
 
 #endif // <%= header_prefix %>_H

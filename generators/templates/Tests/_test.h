@@ -8,6 +8,7 @@
 
 namespace <%= namespace %> {
   using namespace ::testing;
+
   class <%= test_name %> : public Test {
   protected:
     <%= test_name %>() = default;
