@@ -17,6 +17,12 @@ const COMPILER_CHOICES = [
     cpp: `g++`,
   }
 ];
+const CPP_STANDARDS = [
+  `20`, `11`, `03`, `14`, `17`, `23`,
+];
+const C_STANDARDS = [
+  `23`, `99`, `11`, `17`,
+];
 
 const DEFAULT_COMPILE_OPTIONS = [];
 
@@ -71,6 +77,13 @@ async function touch(filename) {
   await fsextra.ensureFile(filename);
   const now = new Date();
   await fsextra.utimes(filename, now, now);
+}
+
+function supportsAutoReturns(standard) {
+  return standard === `14`
+      || standard === `17`
+      || standard === `20`
+      || standard === `23`;
 }
 
 export default class extends Generator {
@@ -167,6 +180,20 @@ export default class extends Generator {
         message: `Compiler?`,
         choices: COMPILER_CHOICES.map((compiler) => compiler.name),
         store: true,
+      },
+      {
+        type: `list`,
+        name: `c_standard`,
+        message: `c Standard?`,
+        choices: C_STANDARDS,
+        store: true,
+      },
+      {
+        type: `list`,
+        name: `cpp_standard`,
+        message: `c++ Standard?`,
+        choices: CPP_STANDARDS,
+        store: true,
       }
     ]);
     const project_name = this.options[`project_name`];
@@ -175,6 +202,8 @@ export default class extends Generator {
       cmake_version: this.props[`cmake_version`],
     };
     const source_prefix = this.props[`source_prefix`];
+    const cpp_standard = this.props[`cpp_standard`];
+    const c_standard = this.props[`c_standard`];
     this._cpp_ctx = {
       ...this._root_ctx,
       header_prefix: this.props[`header_prefix`],
@@ -210,6 +239,8 @@ export default class extends Generator {
       library_name,
       compile_options,
       compiler,
+      c_standard,
+      cpp_standard,
     };
   }
 
@@ -367,19 +398,20 @@ export default class extends Generator {
     this.log(`Generating initial code....`);
     {
       this.fs.copyTpl(
-        this.templatePath(`project.h.in`),
+        this.templatePath(`_project.h.in`),
         this.destinationPath(createDestFilename(`h.in`)),
         this._cpp_ctx,
       );
     }
     {
       this.fs.copyTpl(
-        this.templatePath(`project.cc`),
+        this.templatePath(`_project.cc`),
         this.destinationPath(createDestFilename(`cc`)),
         this._cpp_ctx,
       );
     }
     if(this.options[`executable`]) {
+      this.log(`Generating ${chalk.cyan(`main.cc`)}....`);
       // main.cc
       this.fs.copyTpl(
         this.templatePath(`_main.cc`),
