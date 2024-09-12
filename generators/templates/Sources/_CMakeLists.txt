@@ -18,9 +18,10 @@ add_library(<%= library_name -%>
   ${PROJECT_BINARY_DIR}/Sources/<%= main_header_path %>
   ${<%= cmake_prefix %>_SOURCES})
 
-target_link_libraries(<%= library_name -%> ${<%= cmake_prefix %>_LIBRARIES})
+target_link_libraries(<%= library_name -%>
+  PUBLIC ${<%= cmake_prefix %>_LIBRARIES})
 target_compile_options(<%= library_name -%>
-  PRIVATE ${<%= cmake_prefix %>_COMPILE_OPTS})
+  PUBLIC ${<%= cmake_prefix %>_COMPILE_OPTS})
 target_include_directories(<%= library_name -%>
-  PUBLIC ${PROJECT_SOURCE_DIR}/Sources
+  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
          ${PROJECT_BINARY_DIR}/Sources)

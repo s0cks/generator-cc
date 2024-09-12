@@ -11,6 +11,7 @@ file(GLOB_RECURSE <%= cmake_prefix %>_TEST_SOURCES
 add_executable(<%= module_name %>
   main.cc
   ${<%= cmake_prefix %>_TEST_SOURCES})
+target_include_directories(<%= module_name %> PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_options(<%= module_name %>
   PRIVATE ${<%= cmake_prefix %>_COMPILE_OPTIONS})
 target_link_libraries(<%= module_name %>

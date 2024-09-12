@@ -4,8 +4,9 @@ find_package(<%= pkg.name %><%_ if (pkg.config) { %> CONFIG<% } %> <%_ if (pkg.r
 
 add_executable(<%= module_name %>
   main.cc)
+target_include_directories(<%= module_name %> PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(<%= module_name %>
-  <%= library_name -%>
+  PUBLIC <%= library_name -%>
   <%_ packages.forEach(function(pkg) { -%>
     <%_ if(pkg.link) { -%>
     <%_ pkg.link.forEach(function(lib) { -%>

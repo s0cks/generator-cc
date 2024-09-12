@@ -1,18 +1,12 @@
 #include <gtest/gtest.h>
 #include <glog/logging.h>
 #include "<%= main_header_path %>"
+#include "<%= test_header_path %>"
 
 namespace <%= namespace %> {
   using namespace ::testing;
 
-  class ExampleTest : public Test {
-  protected:
-    ExampleTest() = default;
-  public:
-    ~ExampleTest() override = default;
-  };
-
-  TEST_F(ExampleTest, Test) {
+  TEST_F(<%= test_name %>, Test) {
     DLOG(INFO) << "Hello World";
   }
 }

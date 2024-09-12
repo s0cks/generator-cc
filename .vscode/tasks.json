@@ -23,7 +23,7 @@
 			"detail": "Build the example project",
 			"dependsOn": [
 				"npm: run example",
-				"Configure example Project",
+				"Configure example Project"
 			],
 			"dependsOrder": "sequence"
 		},
@@ -34,7 +34,7 @@
 			"problemMatcher": [],
 			"detail": "Run the example project",
 			"dependsOn": [
-				"Build example Project",
+				"Build example Project"
 			]
 		}
 	]
