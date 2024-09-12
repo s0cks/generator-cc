@@ -5,6 +5,19 @@ import fs, { existsSync, mkdirSync } from 'fs';
 import fsextra from 'fs-extra';
 import path from 'path';
 
+const COMPILER_CHOICES = [
+  {
+    name: `clang`,
+    c: `clang`,
+    cpp: `clang++`,
+  },
+  {
+    name: `gcc`,
+    c: `gcc`,
+    cpp: `g++`,
+  }
+];
+
 const DEFAULT_COMPILE_OPTIONS = [];
 
 const DEFAULT_CMAKE_VERSION = `3.29.3`;
@@ -148,13 +161,19 @@ export default class extends Generator {
         message: `Namespace`,
         default: this._namespace,
       },
+      {
+        type: `list`,
+        name: `compiler`,
+        message: `Compiler?`,
+        choices: COMPILER_CHOICES.map((compiler) => compiler.name),
+        store: true,
+      }
     ]);
     const project_name = this.options[`project_name`];
     this._root_ctx = {
       project_name,
       cmake_version: this.props[`cmake_version`],
     };
-    console.log(`root context:`, this._root_ctx);
     const source_prefix = this.props[`source_prefix`];
     this._cpp_ctx = {
       ...this._root_ctx,
@@ -164,10 +183,15 @@ export default class extends Generator {
       main_header_filename: `${this._project_name_lower}.h`,
       main_header_path: `${source_prefix}/${this._project_name_lower}.h`,
     };
-    console.log(`cpp context:`, this._cpp_ctx);
     const main_header_filename = `${this._project_name_lower}.h`;
     const library_name = `${this._project_name_lower}-core`;
     const compile_options = this._getCompileOptions();
+    const compiler = COMPILER_CHOICES
+      .find((compiler) => {
+        if(compiler.name === this.props[`compiler`])
+          return true;
+        return false;
+      });
     this._cmake_ctx = {
       ...this._root_ctx,
       header_prefix: this.props[`header_prefix`],
@@ -185,8 +209,8 @@ export default class extends Generator {
       vscode: this.options[`vscode`],
       library_name,
       compile_options,
+      compiler,
     };
-    console.log(`cmake ctx: `, this._cmake_ctx);
   }
 
   _getCompileOptions() {
