@@ -144,6 +144,11 @@ export default class extends Generator {
       type: Boolean,
       default: true
     });
+    this.option("coverage", {
+      description: "Generate w/ lcov support.",
+      type: Boolean,
+      default: true,
+    });
     const project_name = this.options["project_name"].replace(' ', '_');
     this._project_name_lower = project_name.toLowerCase();
     this._source_prefix = project_name.toLowerCase();
@@ -243,6 +248,7 @@ export default class extends Generator {
       clang_format: this.options[`clang-format`],
       vscode: this.options[`vscode`],
       clang_tidy: this.options['clang-tidy'],
+      coverage: this.options["coverage"],
       library_name,
       compile_options,
       compiler,
@@ -486,6 +492,11 @@ export default class extends Generator {
     );
   }
 
+  _genLcovConfig() {
+    this.log(`Generating ${chalk.cyan(`lcov`)} config....`);
+    this._copyCMakeScript(`CodeCoverage`);
+  }
+
   writing() {
     this._genCMakeLists({ executable: true });
     this._genCMakePresets();
@@ -506,6 +517,8 @@ export default class extends Generator {
       this._genClangFormatConfig();
     if(this.options["clang-tidy"])
       this._genClangTidyConfig();
+    if(this.options["lcov"])
+      this._genLcovConfig();
     this._genInitialCode();
     this._genREADME();
   }

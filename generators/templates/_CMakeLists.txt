@@ -21,6 +21,35 @@ if(ENABLE_DOXYGEN)
 endif()
 <%_ } -%>
 
+list(APPEND <%= cmake_prefix %>_COMPILE_OPTS
+  <%_ compile_options.forEach(function(opt) { -%>
+  <%- opt -%>
+  <%_ }) -%>)
+
+<%_ if(coverage) { -%>
+option(ENABLE_COVERAGE "Enable code coverage reports using gcov/lcov" ON)
+if(ENABLE_COVERAGE)
+  include(CodeCoverage)
+  # TODO: cleanup this logic, get it into Coverage.cmake
+  if(${CMAKE_CXX_COMPILER_ID} MATCHES "([aA]pple)?[cC]lang|GNU")
+    list(
+      APPEND
+      <%= cmake_prefix %>_COMPILE_OPTS
+      -O0
+      -g
+      -fprofile-instr-generate
+      -fcoverage-mapping
+      --coverage)
+    list(APPEND <%= cmake_prefix %>_LIBRARIES -fprofile-instr-generate -fprofile-instr-generate
+         -fcoverage-mapping --coverage)
+  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    # TODO: implement
+  else()
+    message(FATAL_ERROR "unsupported compiler: ${CMAKE_CXX_COMPILER_ID}")
+  endif()
+endif()
+<%_ } -%>
+
 <% packages.forEach(function(pkg) { -%>
 find_package(<%= pkg.name %><%_ if (pkg.config) { %> CONFIG<% } %> <%_ if (pkg.required) { %> REQUIRED<% } %>)
 <% }) -%>
@@ -28,11 +57,6 @@ find_package(<%= pkg.name %><%_ if (pkg.config) { %> CONFIG<% } %> <%_ if (pkg.r
 if(CMAKE_BUILD_TYPE MATCHES "^[Dd]ebug")
   add_compile_definitions(<%= header_prefix %>_DEBUG)
 endif()
-
-list(APPEND <%= cmake_prefix %>_COMPILE_OPTS
-  <%_ compile_options.forEach(function(opt) { -%>
-  <%- opt -%>
-  <%_ }) -%>)
 
 link_libraries(
   <%_ packages.forEach(function(pkg) { -%>

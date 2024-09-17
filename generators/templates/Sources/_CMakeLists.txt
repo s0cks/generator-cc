@@ -3,7 +3,8 @@ file(GLOB_RECURSE <%= cmake_prefix %>_SOURCES
   "${CMAKE_CURRENT_SOURCE_DIR}/<%= source_prefix %>/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/<%= source_prefix %>/*.cc"
   "${CMAKE_CURRENT_SOURCE_DIR}/<%= source_prefix %>/**/*.h"
-  "${CMAKE_CURRENT_SOURCE_DIR}/<%= source_prefix %>/**/*.cc")
+  "${CMAKE_CURRENT_SOURCE_DIR}/<%= source_prefix %>/**/*.cc"
+  "${CMAKE_CURRENT_BINARY_DIR}/<%= source_prefix %>/**/*.h")
 
 list(APPEND <%= cmake_prefix %>_LIBRARIES
   <%_ packages.forEach(function(pkg) { -%>
@@ -15,7 +16,6 @@ list(APPEND <%= cmake_prefix %>_LIBRARIES
   <%_ }) -%>)
 
 add_library(<%= library_name -%>
-  ${PROJECT_BINARY_DIR}/Sources/<%= main_header_path %>
   ${<%= cmake_prefix %>_SOURCES})
 
 target_link_libraries(<%= library_name -%>
@@ -24,4 +24,4 @@ target_compile_options(<%= library_name -%>
   PUBLIC ${<%= cmake_prefix %>_COMPILE_OPTS})
 target_include_directories(<%= library_name -%>
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-         ${PROJECT_BINARY_DIR}/Sources)
+         ${CMAKE_CURRENT_BINARY_DIR})

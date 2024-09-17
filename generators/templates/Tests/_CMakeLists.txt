@@ -11,9 +11,9 @@ file(GLOB_RECURSE <%= cmake_prefix %>_TEST_SOURCES
 add_executable(<%= module_name %>
   main.cc
   ${<%= cmake_prefix %>_TEST_SOURCES})
-target_include_directories(<%= module_name %> PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(<%= module_name %> PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 target_compile_options(<%= module_name %>
-  PRIVATE ${<%= cmake_prefix %>_COMPILE_OPTIONS})
+  PUBLIC ${<%= cmake_prefix %>_COMPILE_OPTIONS})
 target_link_libraries(<%= module_name %>
   <%= library_name -%>
   <%_ packages.forEach(function(pkg) { -%>
@@ -23,3 +23,9 @@ target_link_libraries(<%= module_name %>
     <%_ }) -%>
     <%_ } -%>
   <%_ }) -%>)
+
+<%_ if(coverage) { -%>
+if(ENABLE_COVERAGE)
+  create_coverage_target(<%= module_name %> ${PRT_SOU})
+endif()
+<%_ } -%>
