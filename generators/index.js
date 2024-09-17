@@ -124,6 +124,11 @@ export default class extends Generator {
       type: Boolean,
       default: true,
     });
+    this.option("clangd", {
+      description: "Generate w/ clangd support.",
+      type: Boolean,
+      default: true,
+    });
     this.option("rtti", {
       description: "Generate w/ rtti enabled",
       type: Boolean,
@@ -249,6 +254,7 @@ export default class extends Generator {
       vscode: this.options[`vscode`],
       clang_tidy: this.options['clang-tidy'],
       coverage: this.options["coverage"],
+      clangd: this.options[`clangd`],
       library_name,
       compile_options,
       compiler,
@@ -497,6 +503,14 @@ export default class extends Generator {
     this._copyCMakeScript(`CodeCoverage`);
   }
 
+  _genClangdConfig() {
+    this.log(`Generating ${chalk.cyan(`clangd`)} config....`);
+    this.fs.copy(
+      this.templatePath(`.clangd`),
+      this.destinationPath(`.clangd`),
+    );
+  }
+
   writing() {
     this._genCMakeLists({ executable: true });
     this._genCMakePresets();
@@ -519,6 +533,8 @@ export default class extends Generator {
       this._genClangTidyConfig();
     if(this.options["lcov"])
       this._genLcovConfig();
+    if(this.options[`clangd`])
+      this._genClangdConfig();
     this._genInitialCode();
     this._genREADME();
   }
