@@ -112,7 +112,7 @@ export default class extends Generator {
     this.option("doxygen", { //TODO: fix doxygen install
       description: "Generate w/ Doxygen enabled",
       type: Boolean,
-      default: false,
+      default: true,
     });
     this.option("clang-format", {
       description: "Generate w/ clang-format enabled",
@@ -330,13 +330,11 @@ export default class extends Generator {
       mkdirSync(scriptsDir);
     }
     this._copyCMakeScript(`BuildInfo`);
-    if(this.options["doxygen"])
-      this._copyCMakeScript(`DoxygenConfig`);
   }
 
   _genDoxygenConfig() {
     this.log(`Generating ${chalk.cyan(`Doxygen`)} config....`);
-    this._copyCMakeScript(`DoxygenConfig`);
+    this._copyCMakeScript(`Doxygen`);
     const doxyfile = `Doxyfile.in`;
     this.log(`Copuing ${chalk.gray(doxyfile)}....`);
     this.fs.copy(
@@ -439,6 +437,7 @@ export default class extends Generator {
   }
 
   _genClangTidyConfig() {
+    this._copyCMakeScript(`ClangTidy`);
     this.log(`Generating ${chalk.cyan(`clang-tidy`)} config....`);
     this.fs.copyTpl(
       this.templatePath(`_clang-tidy`),

@@ -7,18 +7,18 @@ project(
   LANGUAGES C CXX)
 
 <%_ if(clang_tidy) { -%>
-include(ClangTidy)
 option(ENABLE_CLANG_TIDY "Enable clang-tidy" ON)
 if(ENABLE_CLANG_TIDY)
+  include(ClangTidy)
   enable_clang_tidy()
 endif()
 <%_ } -%>
 
 <%_ if(doxygen) { -%>
-include(DoxygenConfig)
-<%_ } -%>
-<%_ if(cppcheck) { -%>
-include(CppCheckConfig)
+option(ENABLE_DOXYGEN "Build documentation using Doxygen" ON)
+if(ENABLE_DOXYGEN)
+  include(Doxygen)
+endif()
 <%_ } -%>
 
 <% packages.forEach(function(pkg) { -%>
@@ -27,13 +27,6 @@ find_package(<%= pkg.name %><%_ if (pkg.config) { %> CONFIG<% } %> <%_ if (pkg.r
 
 if(CMAKE_BUILD_TYPE MATCHES "^[Dd]ebug")
   add_compile_definitions(<%= header_prefix %>_DEBUG)
-elseif(CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
-  <%_ if(doxygen) { -%>
-  include(DoxygenConfig)
-  <%_ } -%>
-  <%_ if(cppcheck) { -%>
-  include(CppCheckConfig)
-  <%_ } -%>
 endif()
 
 list(APPEND <%= cmake_prefix %>_COMPILE_OPTS
@@ -51,8 +44,16 @@ link_libraries(
   <%_ }) -%>)
 
 add_subdirectory(Sources)
-add_subdirectory(Tests)
-add_subdirectory(Benchmarks)
+
+option(ENABLE_TESTS "Enable tests." ON)
+if(ENABLE_TESTS)
+  add_subdirectory(Tests)
+endif()
+
+option(ENABLE_BENCHMARKS "Enable benchmarks." ON)
+if(ENABLE_BENCHMARKS)
+  add_subdirectory(Benchmarks)
+endif()
 
 <%_ if(executable) { %>
 add_executable(<%= project_name %>

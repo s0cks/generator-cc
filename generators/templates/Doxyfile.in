@@ -1,4 +1,20 @@
-OUTPUT_DIRECTORY       = @CMAKE_CURRENT_BINARY_DIR@/doxygen/
-INPUT                  = @CMAKE_SOURCE_DIR@/Sources/
-PROJECT_NAME           = @PROJECT_NAME@
-RECURSIVE              = true
+OUTPUT_DIRECTORY            = @DOXYGEN_BUILD_DIR@
+INPUT                       = @DOXYGEN_INPUT_DIR@
+PROJECT_NAME                = @PROJECT_NAME@
+EXCLUDE_PATTERNS            = @DOXYGEN_EXCLUDE_PATTERNS@
+RECURSIVE                   = YES
+EXTRACT_ALL                 = YES
+EXTRACT_PRIVATE             = YES
+GENERATE_TODOLIST           = YES
+GENERATE_BUGLIST            = YES
+GENERATE_DEPRECATED_LIST    = YES
+GENERATE_HTML               = YES
+GENERATE_TREEVIEW           = YES
+# dot
+HAVE_DOT                    = YES
+DOT_IMAGE_FORMAT            = svg
+DOT_TRANSPARENT             = YES
+DOT_NUM_THREADS             = @NUM_PROCESSORS@
+# styles
+HTML_COLORSTYLE             = DARK
+HTML_EXTRA_STYLESHEET       = @DOXYGEN_AWESOME_STYLESHEET@
