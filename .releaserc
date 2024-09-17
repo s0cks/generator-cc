@@ -3,8 +3,6 @@
     "main",
     "develop"
   ],
-  "debug": "false",
-  "tagFormat": "${version}",
   "plugins": [
     [
       "@semantic-release/commit-analyzer",

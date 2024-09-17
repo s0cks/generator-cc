@@ -323,7 +323,7 @@ export default class extends Generator {
       this.log(`Creating ${chalk.cyan(`cmake/`)} scripts directory....`);
       mkdirSync(scriptsDir);
     }
-    this._copyCMakeScript(`GitConfig`);
+    this._copyCMakeScript(`BuildInfo`);
     if(this.options["doxygen"])
       this._copyCMakeScript(`DoxygenConfig`);
   }

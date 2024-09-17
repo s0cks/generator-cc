@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION <%= cmake_version %>})
-project(<%= project_name %>)
+include(BuildInfo)
+project(
+  ${BUILD_JSON_NAME}
+  VERSION ${BUILD_JSON_VERSION}
+  HOMEPAGE_URL ${BUILD_JSON_HOMEPAGE}
+  LANGUAGES C CXX)
 
-set(PROJECT_VERSION_MAJOR 0)
-set(PROJECT_VERSION_MINOR 0)
-set(PROJECT_VERSION_PATCH 0)
-
-include(GitConfig)
 <%_ if(doxygen) { -%>
 include(DoxygenConfig)
 <%_ } -%>
