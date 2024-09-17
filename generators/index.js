@@ -119,6 +119,11 @@ export default class extends Generator {
       type: Boolean,
       default: true
     });
+    this.option("clang-tidy", {
+      description: "Generate w/ clang-tidy enabled.",
+      type: Boolean,
+      default: true,
+    });
     this.option("rtti", {
       description: "Generate w/ rtti enabled",
       type: Boolean,
@@ -237,6 +242,7 @@ export default class extends Generator {
       doxygen: this.options[`doxygen`],
       clang_format: this.options[`clang-format`],
       vscode: this.options[`vscode`],
+      clang_tidy: this.options['clang-tidy'],
       library_name,
       compile_options,
       compiler,
@@ -432,6 +438,14 @@ export default class extends Generator {
     );
   }
 
+  _genClangTidyConfig() {
+    this.log(`Generating ${chalk.cyan(`clang-tidy`)} config....`);
+    this.fs.copyTpl(
+      this.templatePath(`_clang-tidy`),
+      this.destinationPath(`.clang-tidy`),
+    );
+  }
+
   _getVcpkgPackages() {
     return []
       .concat(DEFAULT_PACKAGES, DEFAULT_TEST_PACKAGES, DEFAULT_BM_PACKAGES)
@@ -491,6 +505,8 @@ export default class extends Generator {
       this._genVcpkgConfig();
     if(this.options[`clang-format`])
       this._genClangFormatConfig();
+    if(this.options["clang-tidy"])
+      this._genClangTidyConfig();
     this._genInitialCode();
     this._genREADME();
   }

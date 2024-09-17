@@ -6,6 +6,14 @@ project(
   HOMEPAGE_URL ${BUILD_JSON_HOMEPAGE}
   LANGUAGES C CXX)
 
+<%_ if(clang_tidy) { -%>
+include(ClangTidy)
+option(ENABLE_CLANG_TIDY "Enable clang-tidy" ON)
+if(ENABLE_CLANG_TIDY)
+  enable_clang_tidy()
+endif()
+<%_ } -%>
+
 <%_ if(doxygen) { -%>
 include(DoxygenConfig)
 <%_ } -%>
