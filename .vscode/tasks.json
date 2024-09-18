@@ -11,7 +11,7 @@
 		{
 			"type": "shell",
 			"label": "Configure example Project",
-			"command": "cd ${workspaceFolder}/example/build && cd ${workspaceFolder}/example/build && cmake --preset debug-osx-arm64 ..",
+			"command": "cd ${workspaceFolder}/example/build && cd ${workspaceFolder}/example/build && cmake --preset debug-darwin-arm64 ..",
 			"problemMatcher": [],
 			"detail": "Configure the example project"
 		},

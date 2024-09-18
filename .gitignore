@@ -5,6 +5,7 @@ node_modules/
 package-lock.json
 
 .env*
+*.profraw
 
 # ignore osx DS_Store
 .DS_Store

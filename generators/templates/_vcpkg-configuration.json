@@ -8,7 +8,8 @@
     {
       "kind": "git",
       "repository": "https://github.com/s0cks/vcpkg",
-      "baseline": "0929bf4160cb5671403b13f46b7e88657eadbffd"
+      "baseline": "0929bf4160cb5671403b13f46b7e88657eadbffd",
+      "packages": []
     },
     {
       "kind": "artifact",
