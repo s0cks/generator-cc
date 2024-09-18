@@ -1,0 +1,19 @@
+fail_fast: true
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.4
+    hooks:
+      - id: gitleaks
+  - repo: https://github.com/jorisroovers/gitlint.git
+    rev: v0.19.1
+    hooks:
+      - id: gitlint
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.1
+    hooks:
+      - id: actionlint
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.29.2
+    hooks:
+      - id: check-github-actions
+      - id: check-github-workflows

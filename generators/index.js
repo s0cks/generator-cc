@@ -119,6 +119,11 @@ export default class extends Generator {
       type: Boolean,
       default: true
     });
+    this.option(`pre-commit`, {
+      description: `Generate w/ git pre-commit enable.`,
+      type: Boolean,
+      default: true,
+    });
     this.option("clang-tidy", {
       description: "Generate w/ clang-tidy enabled.",
       type: Boolean,
@@ -151,6 +156,11 @@ export default class extends Generator {
     });
     this.option("coverage", {
       description: "Generate w/ lcov support.",
+      type: Boolean,
+      default: true,
+    });
+    this.option(`semantic-release`, {
+      description: `Generate w/ semantic-release support.`,
       type: Boolean,
       default: true,
     });
@@ -496,6 +506,10 @@ export default class extends Generator {
         packages,
       }
     );
+    this.fs.copyTpl(
+      this.templatePath(`_vcpkg-configuration.json`),
+      this.destinationPath(`vcpkg-configuration.json`),
+    );
   }
 
   _genLcovConfig() {
@@ -508,6 +522,22 @@ export default class extends Generator {
     this.fs.copy(
       this.templatePath(`.clangd`),
       this.destinationPath(`.clangd`),
+    );
+  }
+
+  _genPreCommitConfig() {
+    this.log(`Generating ${chalk.cyan(`pre-commit`)} config....`);
+    this.fs.copy(
+      this.templatePath(`_pre-commit-config.yaml`),
+      this.destinationPath(`.pre-commit-config.yaml`),
+    );
+  }
+
+  _genSemanticReleaseConfig() {
+    this.log(`Generating ${chalk.cyan(`semantic-release`)} config....`);
+    this.fs.copy(
+      this.templatePath(`_releaserc`),
+      this.destinationPath(`.releaserc`),
     );
   }
 
@@ -535,6 +565,10 @@ export default class extends Generator {
       this._genLcovConfig();
     if(this.options[`clangd`])
       this._genClangdConfig();
+    if(this.options[`pre-commit`])
+      this._genPreCommitConfig();
+    if(this.options[`semantic-release`])
+      this._genSemanticReleaseConfig();
     this._genInitialCode();
     this._genREADME();
   }
