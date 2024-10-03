@@ -1,0 +1,37 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "Node16",
+        "types": [
+            "node",
+        ],
+        "moduleResolution": "Node16",
+        "sourceMap": true,
+        "esModuleInterop": true,
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "removeComments": false,
+        "noImplicitAny": false,
+        "noEmitOnError": true,
+        "rootDir": "generators/",
+        "outDir": "generators/",
+        "lib": [
+            "dom",
+            "es2015"
+        ],
+        "resolveJsonModule": true,
+        "allowJs": true,
+        "skipLibCheck": false,
+        "strict": true,
+        "isolatedModules": true,
+        "forceConsistentCasingInFileNames": true,
+        "allowSyntheticDefaultImports": true /* Allow 'import x from y' when a module doesn't have a default export. */,
+    },
+    "include": [
+        "generators/**/*.ts",
+    ],
+    "exclude": [
+        "generators/templates/**/*",
+        "node_modules/"
+    ]
+}

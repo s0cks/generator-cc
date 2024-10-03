@@ -29,7 +29,7 @@ list(APPEND <%= cmake_prefix %>_COMPILE_OPTS
 <%_ if(coverage) { -%>
 option(ENABLE_COVERAGE "Enable code coverage reports using gcov/lcov" ON)
 if(ENABLE_COVERAGE)
-  include(CodeCoverage)
+  include(Coverage)
   # TODO: cleanup this logic, get it into Coverage.cmake
   if(${CMAKE_CXX_COMPILER_ID} MATCHES "([aA]pple)?[cC]lang|GNU")
     list(
