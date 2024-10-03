@@ -3,7 +3,6 @@ import chalk from 'chalk';
 import fs, { existsSync, mkdirSync } from 'fs';
 import fsextra from 'fs-extra';
 import path from 'path';
-import { exec } from 'child_process';
 
 const COMPILER_CHOICES = [
   {
@@ -37,52 +36,6 @@ interface Package {
 type PackageList = Array<Package>;
 
 const DEFAULT_CMAKE_VERSION = `3.29.3`;
-const DEFAULT_PACKAGES: PackageList = [
-  {
-    name: `Threads`,
-    required: true,
-    link: [
-      "Threads::Threads"
-    ],
-    vcpkg: null,
-  },
-  {
-    name: `glog`,
-    required: true,
-    config: true,
-    link: [
-      "glog::glog"
-    ]
-  },
-  {
-    name: `gflags`,
-    required: true,
-    config: true,
-    link: [
-      "gflags::gflags"
-    ]
-  }
-];
-const DEFAULT_TEST_PACKAGES: PackageList = [
-  {
-    name: `GTest`,
-    required: true,
-    link: [
-      "GTest::gtest",
-      "GTest::gmock"
-    ]
-  },
-];
-const DEFAULT_BM_PACKAGES: PackageList = [
-  {
-    name: `benchmark`,
-    required: true,
-    link: [
-      "benchmark::benchmark"
-    ]
-  },
-];
-
 async function touch(filename) {
   await fsextra.ensureFile(filename);
   const now = new Date();
@@ -126,12 +79,12 @@ export default class extends Generator {
       description: "The name of the cmake project",
     });
     this.option("tests", {
-      description: "Generate a test module",
+      description: "Generate a test module using Google's GoogleTest framework.",
       type: Boolean,
       default: true,
     });
     this.option("benchmarks", {
-      description: "Generate a benchmark module",
+      description: "Generate a benchmark module using Google's benchmark framework.",
       type: Boolean,
       default: true
     });
@@ -172,6 +125,21 @@ export default class extends Generator {
     });
     this.option(`semantic-release`, {
       description: `Generate w/ semantic-release support.`,
+      type: Boolean,
+      default: true,
+    });
+    this.option(`glog`, {
+      description: "Compile w/ glog",
+      type: Boolean,
+      default: true
+    });
+    this.option(`gflags`, {
+      description: "Compile w/ gflags",
+      type: Boolean,
+      default: true
+    });
+    this.option(`readme`, {
+      description: "Generate a README.md",
       type: Boolean,
       default: true,
     });
@@ -303,7 +271,7 @@ export default class extends Generator {
         source: `_CMakeLists.txt`,
         dest: `CMakeLists.txt`,
         ctx: {
-          packages: DEFAULT_PACKAGES,
+          packages: this.#getDefaultPackages(),
           executable: this.options[`executable`],
         }
       },
@@ -325,7 +293,7 @@ export default class extends Generator {
     });
   }
 
-  _genModule(tpl: string, packages: PackageList, extra: GenModuleConfig = {}) {
+  #genModule(tpl: string, packages: PackageList, extra: GenModuleConfig = {}) {
     this.log(`Generating ${chalk.cyan(tpl)} module....`);
     const module_dir = path.join(process.cwd(), tpl);
     if(!existsSync(module_dir))
@@ -406,7 +374,7 @@ export default class extends Generator {
     this.#genTemplateList(templates);
   }
 
-  _genBuildDirectory() {
+  #genBuildDirectory() {
     this.log(`Generating ${chalk.cyan(`build/`)} directory....`);
     // create build dir
     const dir = path.join(process.cwd(), `build`);
@@ -415,7 +383,7 @@ export default class extends Generator {
     touch(path.join(dir, `.gitkeep`));
   }
 
-  private getCppTemplates(): Array<Template> {
+  #getCppTemplates(): Array<Template> {
     const createDestFilename = (extension: string) => {
       return `Sources/${this.props[`source_prefix`]}/${this.project_name_lower}.${extension}`;
     };
@@ -456,12 +424,12 @@ export default class extends Generator {
     return templates;
   }
 
-  _genInitialCode() {
+  #genInitialCode() {
     this.log(`Generating initial code....`);
-    this.#genTemplateList(this.getCppTemplates(), this.cpp_ctx);
+    this.#genTemplateList(this.#getCppTemplates(), this.cpp_ctx);
   }
 
-  private getClangTemplates(): TemplateList {
+  #getClangTemplates(): TemplateList {
     return [
       {
         source: `_clang-format`,
@@ -485,92 +453,167 @@ export default class extends Generator {
     ];
   }
 
-  _getVcpkgPackages(): PackageList {
-    return ([] as PackageList)
-      .concat(DEFAULT_PACKAGES, DEFAULT_TEST_PACKAGES, DEFAULT_BM_PACKAGES)
+  #getDefaultPackages(): PackageList {
+    const packages: PackageList = [];
+    packages.push({
+      name: `Threads`,
+      required: true,
+      link: [
+        "Threads::Threads"
+      ],
+      vcpkg: null,
+    });
+    if(this.options[`glog`]) {
+      packages.push({
+        name: `glog`,
+        required: true,
+        config: true,
+        link: [
+          "glog::glog"
+        ]
+      });
+    }
+    if(this.options[`gflags`]) {
+      packages.push({
+        name: `gflags`,
+        required: true,
+        config: true,
+        link: [
+          "gflags::gflags"
+        ]
+      });
+    }
+    return packages;
+  }
+
+  #getTestPackages(): PackageList {
+    return [
+      {
+        name: `GTest`,
+        required: true,
+        link: [
+          "GTest::gtest",
+          "GTest::gmock"
+        ]
+      },
+    ];
+  }
+
+  #getBenchmarkPackages(): PackageList {
+    return [
+      {
+        name: `benchmark`,
+        required: true,
+        link: [
+        "benchmark::benchmark"
+        ]
+      },
+    ];
+  }
+
+  #getAllPackages(): PackageList {
+    return [
+      ...this.#getDefaultPackages(),
+      ...this.#getTestPackages(),
+      ...this.#getBenchmarkPackages(),
+    ];
+  }
+
+  #getVcpkgPackages(): PackageList {
+    return this.#getAllPackages()
       .filter((pkg: Package) => pkg.vcpkg !== null);
   }
 
-  _genREADME() {
+  #genREADME() {
     this.log(`Generating ${chalk.cyan(`README.md`)}....`);
-    const packages = this._getVcpkgPackages()
-      .map((pkg: Package) => {
-        return {
-          name: pkg.vcpkg || pkg.name.toLowerCase(),
-          version: pkg.version,
-        };
-      });
-    this.fs.copyTpl(
-      this.templatePath(`_README.md`),
-      this.destinationPath(`README.md`),
+    const readme_ctx = {
+      ...this.root_ctx,
+      packages: this.#getVcpkgPackages()
+        .map((pkg: Package) => {
+          return {
+            name: pkg.vcpkg || pkg.name.toLowerCase(),
+            version: pkg.version,
+          };
+        }),
+      vcpkg: this.options[`vcpkg`],
+      executable: this.options[`executable`],
+    };
+    const templates: TemplateList = [
       {
-        ...this.root_ctx,
-        packages,
-        vcpkg: this.options["vcpkg"],
-        executable: this.options[`executable`],
+        source: `_README.md`,
+        dest: `README.md`,
       }
-    );
+    ];
+    this.#genTemplateList(templates, readme_ctx);
   }
 
-  _genVcpkgConfig() {
+  #genVcpkgConfig() {
     this.log(`Generating ${chalk.cyan(`vcpkg`)} config...`);
-    const packages = this._getVcpkgPackages()
+    const packages = this.#getVcpkgPackages()
       .map((pkg) => pkg.vcpkg || pkg.name.toLowerCase());
-    this.fs.copyTpl(
-      this.templatePath(`_vcpkg.json`),
-      this.destinationPath(`vcpkg.json`),
+    const vcpkg_ctx = {
+      ...this.root_ctx,
+      packages,
+    };
+    const templates: TemplateList = [
       {
-        ...this.root_ctx,
-        packages,
+        source: `_vcpkg.json`,
+        dest: `vcpkg.json`,
+      },
+      {
+        source: `_vcpkg-configuration.json`,
+        dest: `vcpkg-configuration.json`,
       }
-    );
-    this.fs.copyTpl(
-      this.templatePath(`_vcpkg-configuration.json`),
-      this.destinationPath(`vcpkg-configuration.json`),
-    );
+    ];
+    this.#genTemplateList(templates, vcpkg_ctx);
   }
 
   #genClangConfig() {
-    this.#genTemplateList(this.getClangTemplates(), {
+    this.#genTemplateList(this.#getClangTemplates(), {
     });
   }
 
-  _genPreCommitConfig() {
+  #genPreCommitConfig() {
     this.log(`Generating ${chalk.cyan(`pre-commit`)} config....`);
-    this.fs.copy(
-      this.templatePath(`_pre-commit-config.yaml`),
-      this.destinationPath(`.pre-commit-config.yaml`),
-    );
+    this.#genTemplateList([
+      {
+        source: `_pre-commit-config.yaml`,
+        dest: `.pre-commit-config.yaml`,
+      }
+    ]);
   }
 
-  _genSemanticReleaseConfig() {
+  #genSemanticReleaseConfig() {
     this.log(`Generating ${chalk.cyan(`semantic-release`)} config....`);
-    this.fs.copy(
-      this.templatePath(`_releaserc`),
-      this.destinationPath(`.releaserc`),
-    );
+    this.#genTemplateList([
+      {
+        source: `_releaserc`,
+        dest: `.releaserc`,
+      }
+    ]);
   }
 
   writing() {
     this.#genCMakeScripts();
-    this._genBuildDirectory();
+    this.#genBuildDirectory();
     if(this.options[`doxygen`])
       this.#genDoxygenConfig();
-    this._genModule(`Sources`, DEFAULT_PACKAGES, { module_name: this.project_name_lower });
+    this.#genModule(`Sources`, this.#getDefaultPackages(), { module_name: this.project_name_lower });
     if(this.options[`tests`])
-      this._genModule(`Tests`, DEFAULT_TEST_PACKAGES, { executable: true });
+      this.#genModule(`Tests`, this.#getTestPackages(), { executable: true });
     if(this.options[`benchmarks`])
-      this._genModule(`Benchmarks`, DEFAULT_BM_PACKAGES, { executable: true });
+      this.#genModule(`Benchmarks`, this.#getBenchmarkPackages(), { executable: true });
     if(this.options[`vcpkg`])
-      this._genVcpkgConfig();
+      this.#genVcpkgConfig();
     if(this.options[`clang`])
       this.#genClangConfig();
     if(this.options[`pre-commit`])
-      this._genPreCommitConfig();
+      this.#genPreCommitConfig();
     if(this.options[`semantic-release`])
-      this._genSemanticReleaseConfig();
-    this._genInitialCode();
-    this._genREADME();
+      this.#genSemanticReleaseConfig();
+    this.#genInitialCode();
+    if(this.options[`readme`])
+      this.#genREADME();
   }
 
   install() {
