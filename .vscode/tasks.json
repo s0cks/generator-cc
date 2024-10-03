@@ -3,10 +3,20 @@
 	"tasks": [
 		{
 			"type": "npm",
+			"label": "npm: build:dev",
+			"script": "build:dev",
+			"problemMatcher": [],
+			"detail": "build development package",
+		},
+		{
+			"type": "npm",
 			"label": "npm: run example",
 			"script": "example",
 			"problemMatcher": [],
-			"detail": "install dependencies from package"
+			"detail": "install dependencies from package",
+			"dependsOn": [
+				"npm: build:dev"
+			]
 		},
 		{
 			"type": "shell",

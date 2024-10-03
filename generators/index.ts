@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import fs, { existsSync, mkdirSync } from 'fs';
 import fsextra from 'fs-extra';
 import path from 'path';
+import { exec } from 'child_process';
 
 const COMPILER_CHOICES = [
   {
@@ -95,6 +96,18 @@ function supportsAutoReturns(standard) {
       || standard === `23`;
 }
 
+interface Template {
+  source: string;
+  dest: string;
+  ctx?: object;
+}
+type TemplateList = Array<Template>;
+
+export interface GenModuleConfig {
+  module_name?: string;
+  executable?: boolean;
+}
+
 export default class extends Generator {
   private project_name_lower!: string;
   private source_prefix!: string;
@@ -105,7 +118,7 @@ export default class extends Generator {
   private cpp_ctx!: object;
   private props!: object;
 
-  constructor(args, opts) {
+  constructor(args: any, opts: any) {
     super(args, opts);
     this.argument("project_name", {
       type: String,
@@ -122,33 +135,13 @@ export default class extends Generator {
       type: Boolean,
       default: true
     });
-    this.option("cppcheck", { //TODO: fix cppcheck install
-      description: "Generate w/ CppCheck enabled",
-      type: Boolean,
-      default: false,
-    });
     this.option("doxygen", { //TODO: fix doxygen install
       description: "Generate w/ Doxygen enabled",
       type: Boolean,
       default: true,
     });
-    this.option("clang-format", {
-      description: "Generate w/ clang-format enabled",
-      type: Boolean,
-      default: true
-    });
     this.option(`pre-commit`, {
       description: `Generate w/ git pre-commit enable.`,
-      type: Boolean,
-      default: true,
-    });
-    this.option("clang-tidy", {
-      description: "Generate w/ clang-tidy enabled.",
-      type: Boolean,
-      default: true,
-    });
-    this.option("clangd", {
-      description: "Generate w/ clangd support.",
       type: Boolean,
       default: true,
     });
@@ -172,8 +165,8 @@ export default class extends Generator {
       type: Boolean,
       default: true
     });
-    this.option("coverage", {
-      description: "Generate w/ lcov support.",
+    this.option("clang", {
+      description: "Generate w/ clang support.",
       type: Boolean,
       default: true,
     });
@@ -182,10 +175,10 @@ export default class extends Generator {
       type: Boolean,
       default: true,
     });
-    const project_name = this.options["project_name"].replace(' ', '_');
+    const project_name = this.options["project_name"].replace(/[ \-]/, '_');
     this.project_name_lower = project_name.toLowerCase();
     this.source_prefix = project_name.toLowerCase();
-    this.header_prefix = project_name.toUpperCase();
+    this.header_prefix = `${project_name.toUpperCase()}_`;
     this.namespace = project_name.toLowerCase();
   }
 
@@ -247,16 +240,18 @@ export default class extends Generator {
     const source_prefix = this.props[`source_prefix`];
     const cpp_standard = this.props[`cpp_standard`];
     const c_standard = this.props[`c_standard`];
+
+    const main_header_filename = `${this.project_name_lower}.h`;
+    const main_header_path = `${source_prefix}/${this.project_name_lower}.h`;
     this.cpp_ctx = {
       ...this.root_ctx,
       header_prefix: this.props[`header_prefix`],
       namespace: this.props[`namespace`],
       source_prefix,
-      main_header_filename: `${this.project_name_lower}.h`,
-      main_header_path: `${source_prefix}/${this.project_name_lower}.h`,
+      main_header_filename,
+      main_header_path,
       standard: cpp_standard,
     };
-    const main_header_filename = `${this.project_name_lower}.h`;
     const library_name = `${this.project_name_lower}-core`;
     const compile_options = this._getCompileOptions();
     const compiler = COMPILER_CHOICES
@@ -271,18 +266,14 @@ export default class extends Generator {
       cmake_prefix: this.props[`header_prefix`], // TODO: convert this to its own property
       source_prefix,
       main_header_filename,
-      main_header_path: `${source_prefix}/${main_header_filename}`,
+      main_header_path,
       vcpkg: this.options[`vcpkg`],
       rtti: this.options[`rtti`],
       tests: this.options[`tests`],
       benchmarks: this.options[`benchmarks`],
-      cppcheck: this.options[`cppcheck`],
       doxygen: this.options[`doxygen`],
-      clang_format: this.options[`clang-format`],
       vscode: this.options[`vscode`],
-      clang_tidy: this.options['clang-tidy'],
-      coverage: this.options["coverage"],
-      clangd: this.options[`clangd`],
+      clang: this.options[`clang`],
       library_name,
       compile_options,
       compiler,
@@ -300,27 +291,41 @@ export default class extends Generator {
     return opts;
   }
 
-  _genCMakeLists() {
-    this.log(`Generating ${chalk.cyan(`CMakeLists.txt`)}....`)
-    this.fs.copyTpl(
-      this.templatePath("_CMakeLists.txt"),
-      this.destinationPath("CMakeLists.txt"),
-      {
-        ...this.cmake_ctx,
-        packages: DEFAULT_PACKAGES,
-        executable: this.options[`executable`],
-      }
-    );
-    if(this.options[`executable`]) {
-      this.fs.copyTpl(
-        this.templatePath(`_main.cc`),
-        this.destinationPath(`main.cc`),
-        this.cpp_ctx,
-      );
+  #genCMakeScripts() {
+    this.log(`Generating ${chalk.cyan(`CMake`)} scripts....`);
+    const scriptsDir = path.join(process.cwd(), `cmake`);
+    if(!existsSync(scriptsDir)){
+      this.log(`Creating ${chalk.gray(`cmake/`)} scripts directory....`);
+      mkdirSync(scriptsDir);
     }
+    const templates: TemplateList = [
+      {
+        source: `_CMakeLists.txt`,
+        dest: `CMakeLists.txt`,
+        ctx: {
+          packages: DEFAULT_PACKAGES,
+          executable: this.options[`executable`],
+        }
+      },
+      {
+        source: `_CMakePresets.json`,
+        dest: `CMakePresets.json`,
+      },
+      {
+        source: this.#getCMakeScriptPath(`BuildInfo`),
+        dest: this.#getCMakeScriptPath(`BuildInfo`),
+      },
+      {
+        source: `_build.json`,
+        dest: `build.json`
+      }
+    ];
+    this.#genTemplateList(templates, {
+      ...this.cmake_ctx
+    });
   }
 
-  _genModule(tpl, packages, extra: { module_name?: string, executable?: boolean } = {}) {
+  _genModule(tpl: string, packages: PackageList, extra: GenModuleConfig = {}) {
     this.log(`Generating ${chalk.cyan(tpl)} module....`);
     const module_dir = path.join(process.cwd(), tpl);
     if(!existsSync(module_dir))
@@ -353,7 +358,7 @@ export default class extends Generator {
     }
   }
 
-  _copyCMakeScript(name) {
+  _copyCMakeScript(name: string) {
     const script = `cmake/${name}.cmake`;
     this.log(`Copying ${chalk.gray(script)}....`);
     this.fs.copy(
@@ -362,45 +367,43 @@ export default class extends Generator {
     );
   }
 
-  _genCMakeScripts() {
-    this.log(`Generating ${chalk.cyan(`CMake`)} scripts....`);
-    const scriptsDir = path.join(process.cwd(), `cmake`);
-    if(!existsSync(scriptsDir)){
-      this.log(`Creating ${chalk.cyan(`cmake/`)} scripts directory....`);
-      mkdirSync(scriptsDir);
-    }
-    this._copyCMakeScript(`BuildInfo`);
+  #getCMakeScriptPath(name: string): string {
+    return `cmake/${name}.cmake`
   }
 
-  _genDoxygenConfig() {
+  #getDoxygenTemplates(): TemplateList {
+    return [
+      {
+        source: this.#getCMakeScriptPath(`Doxygen`),
+        dest: this.#getCMakeScriptPath(`Doxygen`),
+        ctx: this.cmake_ctx,
+      },
+      {
+        source: `_Doxyfile.in`,
+        dest: `Doxyfile.in`,
+      },
+    ];
+  }
+
+  #genTemplateList(templates: TemplateList, ctx?: object) {
+    templates.forEach((tpl) => {
+      this.log(`Copying ${chalk.gray(tpl.dest)}....`);
+      this.fs.copyTpl(
+        this.templatePath(tpl.source),
+        this.destinationPath(tpl.dest),
+        {
+          ...ctx || {},
+          ...tpl.ctx,
+        },
+      );
+    });
+  }
+
+  #genDoxygenConfig() {
     this.log(`Generating ${chalk.cyan(`Doxygen`)} config....`);
-    this._copyCMakeScript(`Doxygen`);
-    const doxyfile = `Doxyfile.in`;
-    this.log(`Copuing ${chalk.gray(doxyfile)}....`);
-    this.fs.copy(
-      this.templatePath(doxyfile),
-      this.destinationPath(doxyfile)
-    );
-  }
-
-  _genCppCheckConfig() {
-    this.log(`Generating ${chalk.cyan("CppCheck")} config....`)
-    this._copyCMakeScript(`CppCheckConfig`);
-    const suppressions = `.suppress.cppcheck`;
-    this.log(`Copying ${chalk.gray(suppressions)}....`);
-    this.fs.copy(
-      this.templatePath(suppressions),
-      this.destinationPath(suppressions)
-    );
-  }
-
-  _genCMakePresets() {
-    this.log(`Generating ${chalk.cyan(`CMakePresets.json`)}....`)
-    this.fs.copyTpl(
-      this.templatePath(`_CMakePresets.json`),
-      this.destinationPath(`CMakePresets.json`),
-      this.cmake_ctx,
-    );
+    const templates = this.#getDoxygenTemplates();
+    this.log(`Templates:\n${JSON.stringify(templates, null, 2)}`);
+    this.#genTemplateList(templates);
   }
 
   _genBuildDirectory() {
@@ -412,77 +415,74 @@ export default class extends Generator {
     touch(path.join(dir, `.gitkeep`));
   }
 
-  _genTestSources() {
-    const test_name = `${this.options["project_name"]}Test`;
-    this.log(`Generating ${chalk.cyan(test_name)}....`);
-    const test_header_path = `${this.source_prefix}/test_${this.project_name_lower}.h`;
-    this.fs.copyTpl(
-      this.templatePath(`Tests/_test.h`),
-      this.destinationPath(`Tests/${test_header_path}`),
+  private getCppTemplates(): Array<Template> {
+    const createDestFilename = (extension: string) => {
+      return `Sources/${this.props[`source_prefix`]}/${this.project_name_lower}.${extension}`;
+    };
+    const templates: Array<Template> = [
       {
-        ...this.cpp_ctx,
+        source: `_project.h.in`,
+        dest: createDestFilename(`h.in`),
+      },
+      {
+        source: `_project.cc`,
+        dest: createDestFilename(`cc`),
+      }
+    ];
+    if(this.options[`executable`]) {
+      templates.push({
+        source: `_main.cc`,
+        dest: `main.cc`,
+      });
+    }
+    if(this.options[`tests`]) {
+      const test_name = `${this.options["project_name"]}Test`;
+      const test_header_path = `${this.source_prefix}/test_${this.project_name_lower}.h`;
+      const ctx = {
         test_name,
         test_header_path,
-      }
-    );
-    this.fs.copyTpl(
-      this.templatePath(`Tests/_test.cc`),
-      this.destinationPath(`Tests/${this.source_prefix}/test_${this.project_name_lower}.cc`),
-      {
-        ...this.cpp_ctx,
-        test_name,
-        test_header_path,
-      }
-    );
+      };
+      templates.push({
+        source: `Tests/_test.h`,
+        dest: `Tests/${test_header_path}`,
+        ctx,
+      });
+      templates.push({
+        source: `Tests/_test.cc`,
+        dest: `Tests/${this.source_prefix}/test_${this.project_name_lower}.cc`,
+        ctx,
+      });
+    }
+    return templates;
   }
 
   _genInitialCode() {
-    const createDestFilename = (extension) => {
-      return `Sources/${this.props[`source_prefix`]}/${this.project_name_lower}.${extension}`;
-    };
     this.log(`Generating initial code....`);
-    {
-      this.fs.copyTpl(
-        this.templatePath(`_project.h.in`),
-        this.destinationPath(createDestFilename(`h.in`)),
-        this.cpp_ctx,
-      );
-    }
-    {
-      this.fs.copyTpl(
-        this.templatePath(`_project.cc`),
-        this.destinationPath(createDestFilename(`cc`)),
-        this.cpp_ctx,
-      );
-    }
-    if(this.options[`executable`]) {
-      this.log(`Generating ${chalk.cyan(`main.cc`)}....`);
-      // main.cc
-      this.fs.copyTpl(
-        this.templatePath(`_main.cc`),
-        this.destinationPath(`main.cc`),
-        this.cpp_ctx,
-      );
-    }
-    if(this.options[`tests`])
-      this._genTestSources();
+    this.#genTemplateList(this.getCppTemplates(), this.cpp_ctx);
   }
 
-  _genClangFormatConfig() {
-    this.log(`Generating ${chalk.cyan(`ClangFormat`)} config....`);
-    this.fs.copy(
-      this.templatePath(`.clang-format`),
-      this.destinationPath(`.clang-format`)
-    );
-  }
-
-  _genClangTidyConfig() {
-    this._copyCMakeScript(`ClangTidy`);
-    this.log(`Generating ${chalk.cyan(`clang-tidy`)} config....`);
-    this.fs.copyTpl(
-      this.templatePath(`_clang-tidy`),
-      this.destinationPath(`.clang-tidy`),
-    );
+  private getClangTemplates(): TemplateList {
+    return [
+      {
+        source: `_clang-format`,
+        dest: `.clang-format`,
+      },
+      {
+        source: `_clang-tidy`,
+        dest: `.clang-tidy`,
+      },
+      {
+        source: `_clangd`,
+        dest: `.clangd`,
+      },
+      {
+        source: this.#getCMakeScriptPath(`Coverage`),
+        dest: this.#getCMakeScriptPath(`Coverage`),
+        ctx: {
+          ...this.cmake_ctx,
+        }
+      }
+    ];
   }
 
   _getVcpkgPackages(): PackageList {
@@ -530,17 +530,9 @@ export default class extends Generator {
     );
   }
 
-  _genLcovConfig() {
-    this.log(`Generating ${chalk.cyan(`lcov`)} config....`);
-    this._copyCMakeScript(`Coverage`);
-  }
-
-  _genClangdConfig() {
-    this.log(`Generating ${chalk.cyan(`clangd`)} config....`);
-    this.fs.copy(
-      this.templatePath(`.clangd`),
-      this.destinationPath(`.clangd`),
-    );
+  #genClangConfig() {
+    this.#genTemplateList(this.getClangTemplates(), {
+    });
   }
 
   _genPreCommitConfig() {
@@ -560,12 +552,10 @@ export default class extends Generator {
   }
 
   writing() {
-    this._genCMakeLists();
-    this._genCMakePresets();
-    this._genCMakeScripts();
+    this.#genCMakeScripts();
     this._genBuildDirectory();
     if(this.options[`doxygen`])
-      this._genDoxygenConfig();
+      this.#genDoxygenConfig();
     this._genModule(`Sources`, DEFAULT_PACKAGES, { module_name: this.project_name_lower });
     if(this.options[`tests`])
       this._genModule(`Tests`, DEFAULT_TEST_PACKAGES, { executable: true });
@@ -573,14 +563,8 @@ export default class extends Generator {
       this._genModule(`Benchmarks`, DEFAULT_BM_PACKAGES, { executable: true });
     if(this.options[`vcpkg`])
       this._genVcpkgConfig();
-    if(this.options[`clang-format`])
-      this._genClangFormatConfig();
-    if(this.options["clang-tidy"])
-      this._genClangTidyConfig();
-    if(this.options["coverage"])
-      this._genLcovConfig();
-    if(this.options[`clangd`])
-      this._genClangdConfig();
+    if(this.options[`clang`])
+      this.#genClangConfig();
     if(this.options[`pre-commit`])
       this._genPreCommitConfig();
     if(this.options[`semantic-release`])

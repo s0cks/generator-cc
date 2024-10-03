@@ -24,7 +24,7 @@ target_link_libraries(<%= module_name %>
     <%_ } -%>
   <%_ }) -%>)
 
-<%_ if(coverage) { -%>
+<%_ if(clang) { -%>
 if(ENABLE_COVERAGE)
   create_coverage_target(<%= module_name %> ${PRT_SOU})
 endif()

@@ -25,13 +25,13 @@
         "strict": true,
         "isolatedModules": true,
         "forceConsistentCasingInFileNames": true,
-        "allowSyntheticDefaultImports": true /* Allow 'import x from y' when a module doesn't have a default export. */,
+        "allowSyntheticDefaultImports": true
     },
     "include": [
         "generators/**/*.ts",
     ],
     "exclude": [
-        "generators/templates/**/*",
+        "generators/templates/",
         "node_modules/"
     ]
 }

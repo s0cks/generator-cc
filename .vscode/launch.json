@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "yo example",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "yo",
+      "runtimeArgs": [ "@s0cks/cc", "example", "--force" ],
+      "cwd": "${workspaceFolder}/example",
+      "console": "integratedTerminal",
+    },
+  ]
+}

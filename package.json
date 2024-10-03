@@ -6,6 +6,7 @@
   "main": "generators/index.js",
   "type": "module",
   "scripts": {
+    "build:dev": "tsc",
     "example": "cd example/ && yo @s0cks/cc example --force"
   },
   "repository": {
