@@ -4,18 +4,9 @@ import fs, { existsSync, mkdirSync } from 'fs';
 import fsextra from 'fs-extra';
 import path from 'path';
 
-const COMPILER_CHOICES = [
-  {
-    name: `clang`,
-    c: `clang`,
-    cpp: `clang++`,
-  },
-  {
-    name: `gcc`,
-    c: `gcc`,
-    cpp: `g++`,
-  }
-];
+import COMPILERS, { Compiler } from './compiler.js';
+import { Package, PackageList, DEFAULT_PACKAGES, TEST_PACKAGES, BENCHMARK_PACKAGES } from './packages.js';
+
 const CPP_STANDARDS = [
   `20`, `11`, `03`, `14`, `17`, `23`,
 ];
@@ -24,16 +15,6 @@ const C_STANDARDS = [
 ];
 
 const DEFAULT_COMPILE_OPTIONS = [];
-
-interface Package {
-  name: string;
-  version?: string;
-  required?: boolean;
-  config?: boolean;
-  link: Array<string>;
-  vcpkg?: string | null;
-};
-type PackageList = Array<Package>;
 
 const DEFAULT_CMAKE_VERSION = `3.29.3`;
 async function touch(filename) {
@@ -57,7 +38,7 @@ interface Template {
 type TemplateList = Array<Template>;
 
 export interface GenModuleConfig {
-  module_name?: string;
+  target_name?: string;
   executable?: boolean;
 }
 
@@ -121,7 +102,7 @@ export default class extends Generator {
     this.option("executable", {
       description: "Generate executable source",
       type: Boolean,
-      default: true
+      default: false,
     });
     this.option("clang", {
       description: "Generate w/ clang support.",
@@ -145,6 +126,11 @@ export default class extends Generator {
     });
     this.option(`readme`, {
       description: "Generate a README.md",
+      type: Boolean,
+      default: true,
+    });
+    this.option(`gitignore`, {
+      description: `Generate a .gitignore`,
       type: Boolean,
       default: true,
     });
@@ -187,7 +173,7 @@ export default class extends Generator {
         type: `list`,
         name: `compiler`,
         message: `Compiler?`,
-        choices: COMPILER_CHOICES.map((compiler) => compiler.name),
+        choices: COMPILERS.map((compiler: Compiler) => compiler.name),
         store: true,
       },
       {
@@ -225,10 +211,9 @@ export default class extends Generator {
       main_header_path,
       standard: cpp_standard,
     };
-    const library_name = `${this.project_name_lower}-core`;
     const compile_options = this._getCompileOptions();
-    const compiler = COMPILER_CHOICES
-      .find((compiler) => {
+    const compiler = COMPILERS
+      .find((compiler: Compiler) => {
         if(compiler.name === this.props[`compiler`])
           return true;
         return false;
@@ -247,7 +232,6 @@ export default class extends Generator {
       doxygen: this.options[`doxygen`],
       vscode: this.options[`vscode`],
       clang: this.options[`clang`],
-      library_name,
       compile_options,
       compiler,
       c_standard,
@@ -316,15 +300,20 @@ export default class extends Generator {
       }
     }
     {
+      const lib_name = this.options[`executable`]
+        ? `${this.project_name_lower}-core`
+        : this.project_name_lower;
       // CMakeLists.txt
       this.fs.copyTpl(
         this.templatePath(`${module_name}/_CMakeLists.txt`),
         this.destinationPath(`${module_name}/CMakeLists.txt`),
         {
           ...this.cmake_ctx,
-          module_name: extra.module_name || module_name,
-          packages: packages,
+          module_name,
+          target_name: extra.target_name || `${this.project_name_lower}-${module_name.toLowerCase()}`,
+          packages,
           executable: extra.executable || false,
+          lib_name,
         }
       );
     }
@@ -357,20 +346,6 @@ export default class extends Generator {
     return `cmake/${name}.cmake`
   }
 
-  #getDoxygenTemplates(): TemplateList {
-    return [
-      {
-        source: this.#getCMakeScriptPath(`Doxygen`),
-        dest: this.#getCMakeScriptPath(`Doxygen`),
-        ctx: this.cmake_ctx,
-      },
-      {
-        source: `_Doxyfile.in`,
-        dest: `Doxyfile.in`,
-      },
-    ];
-  }
-
   #genTemplateList(templates: TemplateList, ctx?: object) {
     templates.forEach((tpl) => {
       this.log(`Copying ${chalk.gray(tpl.dest)}....`);
@@ -385,10 +360,31 @@ export default class extends Generator {
     });
   }
 
+  #getDoxygenTemplates(): TemplateList {
+    return [
+      {
+        source: this.#getCMakeScriptPath(`Doxygen`),
+        dest: this.#getCMakeScriptPath(`Doxygen`),
+        ctx: this.cmake_ctx,
+      },
+      {
+        source: `_Doxyfile.in`,
+        dest: `Doxyfile.in`,
+      },
+    ];
+  }
+
   #genDoxygenConfig() {
     this.log(`Generating ${chalk.cyan(`Doxygen`)} config....`);
+    {
+      const dir = this.destinationPath(`docs`);
+      if(!existsSync(dir)) {
+        this.log(`Creating ${chalk.blue(`docs`)}/ directory....`);
+        mkdirSync(dir);
+      }
+      touch(path.join(dir, `.gitkeep`));
+    }
     const templates = this.#getDoxygenTemplates();
-    this.log(`Templates:\n${JSON.stringify(templates, null, 2)}`);
     this.#genTemplateList(templates);
   }
 
@@ -421,6 +417,7 @@ export default class extends Generator {
       const ctx = {
         test_name,
         test_header_path,
+        test_header_guard: `${this.header_prefix}TEST_H`
       };
       templates.push({
         source: `Tests/_test.h`,
@@ -473,20 +470,14 @@ export default class extends Generator {
   }
 
   #getDefaultPackages(): PackageList {
-    const packages: PackageList = [];
-    packages.push({
-      name: `Threads`,
-      required: true,
-      link: [
-        "Threads::Threads"
-      ],
-      vcpkg: null,
-    });
+    const packages: PackageList = [
+      ...DEFAULT_PACKAGES,
+    ];
     if(this.options[`glog`]) {
       packages.push({
         name: `glog`,
+        vcpkg: `glog`,
         required: true,
-        config: true,
         link: [
           "glog::glog"
         ]
@@ -495,8 +486,8 @@ export default class extends Generator {
     if(this.options[`gflags`]) {
       packages.push({
         name: `gflags`,
+        vcpkg: `gflags`,
         required: true,
-        config: true,
         link: [
           "gflags::gflags"
         ]
@@ -505,36 +496,11 @@ export default class extends Generator {
     return packages;
   }
 
-  #getTestPackages(): PackageList {
-    return [
-      {
-        name: `GTest`,
-        required: true,
-        link: [
-          "GTest::gtest",
-          "GTest::gmock"
-        ]
-      },
-    ];
-  }
-
-  #getBenchmarkPackages(): PackageList {
-    return [
-      {
-        name: `benchmark`,
-        required: true,
-        link: [
-        "benchmark::benchmark"
-        ]
-      },
-    ];
-  }
-
   #getAllPackages(): PackageList {
     return [
       ...this.#getDefaultPackages(),
-      ...this.#getTestPackages(),
-      ...this.#getBenchmarkPackages(),
+      ...TEST_PACKAGES,
+      ...BENCHMARK_PACKAGES,
     ];
   }
 
@@ -566,13 +532,23 @@ export default class extends Generator {
     this.#genTemplateList(templates, readme_ctx);
   }
 
+  #genGitIgnore() {
+    const templates: TemplateList = [
+      {
+        source: `_gitignore`,
+        dest: `.gitignore`,
+      },
+    ];
+    this.#genTemplateList(templates, {
+      ...this.root_ctx
+    });
+  }
+
   #genVcpkgConfig() {
     this.log(`Generating ${chalk.cyan(`vcpkg`)} config...`);
-    const packages = this.#getVcpkgPackages()
-      .map((pkg) => pkg.vcpkg || pkg.name.toLowerCase());
     const vcpkg_ctx = {
       ...this.root_ctx,
-      packages,
+      packages: this.#getVcpkgPackages(),
     };
     const templates: TemplateList = [
       {
@@ -617,11 +593,11 @@ export default class extends Generator {
     this.#genBuildDirectory();
     if(this.options[`doxygen`])
       this.#genDoxygenConfig();
-    this.#genCMakeModule(`Sources`, this.#getDefaultPackages(), { module_name: this.project_name_lower });
+    this.#genCMakeModule(`Sources`, [] as PackageList, { target_name: this.project_name_lower });
     if(this.options[`tests`])
-      this.#genCMakeModule(`Tests`, this.#getTestPackages(), { executable: true });
+      this.#genCMakeModule(`Tests`, TEST_PACKAGES, { executable: true });
     if(this.options[`benchmarks`])
-      this.#genCMakeModule(`Benchmarks`, this.#getBenchmarkPackages(), { executable: true });
+      this.#genCMakeModule(`Benchmarks`, BENCHMARK_PACKAGES, { executable: true });
     if(this.options[`vcpkg`])
       this.#genVcpkgConfig();
     if(this.options[`clang`])
@@ -633,6 +609,8 @@ export default class extends Generator {
     this.#genInitialCode();
     if(this.options[`readme`])
       this.#genREADME();
+    if(this.options[`gitignore`])
+      this.#genGitIgnore();
   }
 
   install() {

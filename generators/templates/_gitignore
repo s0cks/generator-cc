@@ -1,0 +1,19 @@
+.cache/
+*.env
+
+# keep build/ dir
+build/*
+!/build/.gitkeep
+
+# keep docs/ dir
+docs/*
+!/docs/.gitkeep
+
+/.gitkeep
+*.profraw
+
+# ignore osx DS_Store
+.DS_Store
+._.DS_Store
+**/.DS_Store
+**/._.DS_Store

@@ -29,7 +29,7 @@
         "CMAKE_C_COMPILER": "<%= compiler.c %>",
         "CMAKE_CXX_STANDARD": "<%= cpp_standard %>",
         "CMAKE_CXX_STANDARD_REQUIRED": "ON",
-        "CMAKE_CXX_COMPILER": "<%= compiler.cpp %>",
+        "CMAKE_CXX_COMPILER": "<%= compiler.cc %>",
         "CMAKE_CXX_EXTENSIONS": "OFF"
       }
     },

@@ -1,16 +1,19 @@
-<% packages.forEach(function(pkg) { -%>
-find_package(<%= pkg.name %><%_ if (pkg.config) { %> CONFIG<% } %> <%_ if (pkg.required) { %> REQUIRED<% } %>)
-<% }) -%>
+file(GLOB_RECURSE <%= cmake_prefix %>BENCHMARK_SOURCES
+  "${CMAKE_CURRENT_SOURCE_DIR}/<%= source_prefix %>/*.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/<%= source_prefix %>/*.cc"
+  "${CMAKE_CURRENT_SOURCE_DIR}/<%= source_prefix %>/**/*.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/<%= source_prefix %>/**/*.cc")
 
-add_executable(<%= module_name %>
-  main.cc)
-target_include_directories(<%= module_name %> PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(<%= module_name %>
-  PUBLIC <%= library_name -%>
-  <%_ packages.forEach(function(pkg) { -%>
-    <%_ if(pkg.link) { -%>
-    <%_ pkg.link.forEach(function(lib) { -%>
-  <%- lib -%>
-    <%_ }) -%>
-    <%_ } -%>
-  <%_ }) -%>)
+<%_ if(packages.length >= 1) { -%>
+<%_ packages.forEach(function(pkg) { -%>
+find_package(<%= pkg.name -%><%_ if (pkg.config) { -%> CONFIG<%_ } -%> <%_ if (pkg.required) { -%> REQUIRED<%_ } -%>)
+<%_ }) -%>
+<%_ } -%>
+
+add_executable(<%= target_name %>
+  main.cc
+  ${<%= cmake_prefix %>BENCHMARK_SOURCES})
+target_include_directories(<%= target_name %>
+  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(<%= target_name %>
+  PUBLIC <%= lib_name -%> <%= packages.filter((pkg) => pkg.link).flatMap((pkg) => pkg.link).join(" ") -%>)

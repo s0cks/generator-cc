@@ -1,5 +1,5 @@
-#ifndef <%= header_prefix %>_TEST_H
-#define <%= header_prefix %>_TEST_H
+#ifndef <%= test_header_guard %>
+#define <%= test_header_guard %>
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
@@ -9,7 +9,7 @@
 namespace <%= namespace %> {
   using namespace ::testing;
 
-  class <%= test_name %> : public Test {
+  class <%= test_name %> : public Test { // NOLINT
   protected:
     <%= test_name %>() = default;
   public:
@@ -17,4 +17,4 @@ namespace <%= namespace %> {
   };
 }
 
-#endif // <%= header_prefix %>_TEST_H
+#endif  // <%= test_header_guard %>

@@ -1,31 +1,37 @@
-<% packages.forEach(function(pkg) { -%>
-find_package(<%= pkg.name %><%_ if (pkg.config) { %> CONFIG<% } %> <%_ if (pkg.required) { %> REQUIRED<% } %>)
-<% }) -%>
+enable_testing()
 
-file(GLOB_RECURSE <%= cmake_prefix %>_TEST_SOURCES
+<%_ if(packages.length >= 1) { -%>
+<%_ packages.forEach(function(pkg) { -%>
+find_package(<%= pkg.name %><%_ if (pkg.vcpkg) { %> CONFIG<% } %> <%_ if (pkg.required) { %> REQUIRED<% } %>)
+<%_ }) -%>
+<%_ } -%>
+
+file(GLOB_RECURSE <%= cmake_prefix %>TEST_SOURCES
   "${CMAKE_CURRENT_SOURCE_DIR}/<%= source_prefix %>/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/<%= source_prefix %>/*.cc"
   "${CMAKE_CURRENT_SOURCE_DIR}/<%= source_prefix %>/**/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/<%= source_prefix %>/**/*.cc")
 
-add_executable(<%= module_name %>
+<%_ if (executable) { -%>
+add_executable(<%= target_name %>
   main.cc
-  ${<%= cmake_prefix %>_TEST_SOURCES})
-target_include_directories(<%= module_name %> PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
-target_compile_options(<%= module_name %>
-  PUBLIC ${<%= cmake_prefix %>_COMPILE_OPTIONS})
-target_link_libraries(<%= module_name %>
-  <%= library_name -%>
-  <%_ packages.forEach(function(pkg) { -%>
-    <%_ if(pkg.link) { -%>
-    <%_ pkg.link.forEach(function(lib) { -%>
-  <%- lib -%>
-    <%_ }) -%>
-    <%_ } -%>
-  <%_ }) -%>)
+  ${<%= cmake_prefix %>TEST_SOURCES})
+<%_ } else { -%>
+add_library(<%= target_name %>
+  ${<%= cmake_prefix %>TEST_SOURCES})
+<%_ } -%>
+target_include_directories(<%= target_name %>
+  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+         ${CMAKE_CURRENT_BINARY_DIR})
+target_compile_options(<%= target_name %>
+  PUBLIC ${<%= cmake_prefix %>COMPILE_OPTIONS})
+<%_ if(packages.length >= 1) { -%>
+target_link_libraries(<%= target_name %>
+  PUBLIC <%= lib_name -%> <%= packages.filter((pkg) => pkg.link).flatMap((pkg) => pkg.link).join(" ") -%>)
+<%_ } -%>
 
 <%_ if(clang) { -%>
 if(ENABLE_COVERAGE)
-  create_coverage_target(<%= module_name %> ${PRT_SOU})
+  create_coverage_target(<%= target_name %> ${<%= cmake_prefix %>TEST_SOURCES})
 endif()
 <%_ } -%>

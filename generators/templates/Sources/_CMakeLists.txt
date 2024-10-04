@@ -1,34 +1,37 @@
-configure_file(<%= main_header_path %>.in ${PROJECT_BINARY_DIR}/Sources/<%= main_header_path %>)
-file(GLOB_RECURSE <%= cmake_prefix %>_SOURCES
+configure_file(<%= main_header_path %>.in ${CMAKE_CURRENT_BINARY_DIR}/<%= main_header_path %>)
+file(GLOB_RECURSE <%= cmake_prefix %>SOURCES
   "${CMAKE_CURRENT_SOURCE_DIR}/<%= source_prefix %>/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/<%= source_prefix %>/*.cc"
   "${CMAKE_CURRENT_SOURCE_DIR}/<%= source_prefix %>/**/*.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/<%= source_prefix %>/**/*.cc"
   "${CMAKE_CURRENT_BINARY_DIR}/<%= source_prefix %>/**/*.h")
 
-list(APPEND <%= cmake_prefix %>_LIBRARIES
-  <%_ packages.forEach(function(pkg) { -%>
-    <%_ if(pkg.link) { -%>
-    <%_ pkg.link.forEach(function(lib) { -%>
-  <%- lib -%>
-    <%_ }) -%>
-    <%_ } -%>
-  <%_ }) -%>)
+<%_ if(packages.length >= 1) { -%>
+<%_ packages.forEach((pkg) => { -%>
+find_package(<%= pkg.name %><%_ if (pkg.vcpkg) { -%> CONFIG<%_ } -%> <%_ if (pkg.required) { -%> REQUIRED<%_ } -%>)
+<%_ }) -%>
+<%_ } -%>
 
-add_library(<%= library_name -%>
-  ${<%= cmake_prefix %>_SOURCES})
-
-target_link_libraries(<%= library_name -%>
-  PUBLIC ${<%= cmake_prefix %>_LIBRARIES})
-target_compile_options(<%= library_name -%>
-  PUBLIC ${<%= cmake_prefix %>_COMPILE_OPTS})
-target_include_directories(<%= library_name -%>
+<%_ if(executable) { -%>
+add_library(<%= lib_name %>
+  ${<%= cmake_prefix %>SOURCES})
+<%_ } else { -%>
+add_library(<%= target_name %>
+  ${<%= cmake_prefix %>SOURCES})
+<%_ } -%>
+target_compile_options(<%= target_name %>
+  PUBLIC ${<%= cmake_prefix %>COMPILE_OPTS})
+target_include_directories(<%= target_name %>
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
          ${CMAKE_CURRENT_BINARY_DIR})
+<%_ if(packages.size >= 1) { -%>
+target_link_libraries(<%= target_name -%>
+  PUBLIC <%= packages.filter((pkg) => pkg.link).flatMap((pkg) => pkg.link).join(" ") -%>)
+<%_ } -%>
 
-<%_ if(executable) { %>
-add_executable(<%= project_name %>
+<%_ if(executable) { -%>
+add_executable(<%= target_name %>
   main.cc)
-target_link_libraries(<%= project_name %>
-  <%= library_name -%>)
-<%_ } %>
+target_link_libraries(<%= target_name %>
+  PUBLIC <%= lib_name -%>)
+<%_ } -%>
