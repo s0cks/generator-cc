@@ -6,7 +6,7 @@ file(GLOB_RECURSE <%= cmake_prefix %>BENCHMARK_SOURCES
 
 <%_ if(packages.length >= 1) { -%>
 <%_ packages.forEach(function(pkg) { -%>
-find_package(<%= pkg.name -%><%_ if (pkg.config) { -%> CONFIG<%_ } -%> <%_ if (pkg.required) { -%> REQUIRED<%_ } -%>)
+find_package(<%= pkg.name -%><%_ if (pkg.vcpkg) { -%> CONFIG<%_ } -%> <%_ if (pkg.required) { -%> REQUIRED<%_ } -%>)
 <%_ }) -%>
 <%_ } -%>
 

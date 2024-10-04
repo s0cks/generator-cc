@@ -15,19 +15,11 @@ const C_STANDARDS = [
 ];
 
 const DEFAULT_COMPILE_OPTIONS = [];
-
 const DEFAULT_CMAKE_VERSION = `3.29.3`;
 async function touch(filename) {
   await fsextra.ensureFile(filename);
   const now = new Date();
   await fsextra.utimes(filename, now, now);
-}
-
-function supportsAutoReturns(standard) {
-  return standard === `14`
-      || standard === `17`
-      || standard === `20`
-      || standard === `23`;
 }
 
 interface Template {
@@ -42,11 +34,6 @@ export interface GenModuleConfig {
   executable?: boolean;
 }
 
-class CMakeModuleGenerator {
-  constructor(name: string, template_path) {
-  }
-};
-
 export default class extends Generator {
   private project_name_lower!: string;
   private source_prefix!: string;
@@ -56,6 +43,7 @@ export default class extends Generator {
   private cmake_ctx!: object;
   private cpp_ctx!: object;
   private props!: object;
+  private project_dir!: string;
 
   constructor(args: any, opts: any) {
     super(args, opts);
@@ -191,6 +179,7 @@ export default class extends Generator {
         store: true,
       }
     ]);
+    this.project_dir = this.destinationRoot();
     const project_name = this.options[`project_name`];
     this.root_ctx = {
       project_name,
@@ -333,15 +322,6 @@ export default class extends Generator {
     this.log(`Generated ${chalk.cyan(module_name)} CMake module.`);
   }
 
-  _copyCMakeScript(name: string) {
-    const script = `cmake/${name}.cmake`;
-    this.log(`Copying ${chalk.gray(script)}....`);
-    this.fs.copy(
-      this.templatePath(script),
-      this.destinationPath(script),
-    );
-  }
-
   #getCMakeScriptPath(name: string): string {
     return `cmake/${name}.cmake`
   }
@@ -374,27 +354,26 @@ export default class extends Generator {
     ];
   }
 
-  #genDoxygenConfig() {
-    this.log(`Generating ${chalk.cyan(`Doxygen`)} config....`);
-    {
-      const dir = this.destinationPath(`docs`);
-      if(!existsSync(dir)) {
-        this.log(`Creating ${chalk.blue(`docs`)}/ directory....`);
-        mkdirSync(dir);
-      }
-      touch(path.join(dir, `.gitkeep`));
+  #createDirIfNotExists(dirname: string, gitkeep: boolean = false) {
+    const dir = this.destinationPath(dirname);
+    if(!existsSync(dir)) {
+      mkdirSync(dir);
+      this.log(`created ${chalk.gray(dirname)}/`);
     }
-    const templates = this.#getDoxygenTemplates();
-    this.#genTemplateList(templates);
+    if(gitkeep) {
+      const gitkeep_file = path.join(dir, `.gitkeep`);
+      if(!existsSync(gitkeep_file)) {
+         touch(gitkeep_file);
+         this.log(`created ${chalk.gray(`${dirname}/.gitkeep`)}`);
+      }
+    }
   }
 
-  #genBuildDirectory() {
-    this.log(`Generating ${chalk.cyan(`build/`)} directory....`);
-    // create build dir
-    const dir = path.join(process.cwd(), `build`);
-    if(!existsSync(dir))
-      mkdirSync(dir);
-    touch(path.join(dir, `.gitkeep`));
+  #genDoxygenConfig() {
+    this.log(`Generating ${chalk.cyan(`Doxygen`)} config....`);
+    this.#createDirIfNotExists(`docs`, true);
+    const templates = this.#getDoxygenTemplates();
+    this.#genTemplateList(templates);
   }
 
   #getCppTemplates(): Array<Template> {
@@ -564,8 +543,7 @@ export default class extends Generator {
   }
 
   #genClangConfig() {
-    this.#genTemplateList(this.#getClangTemplates(), {
-    });
+    this.#genTemplateList(this.#getClangTemplates());
   }
 
   #genPreCommitConfig() {
@@ -590,7 +568,7 @@ export default class extends Generator {
 
   writing() {
     this.#genCMakeScripts();
-    this.#genBuildDirectory();
+    this.#createDirIfNotExists(`build`, true);
     if(this.options[`doxygen`])
       this.#genDoxygenConfig();
     this.#genCMakeModule(`Sources`, [] as PackageList, { target_name: this.project_name_lower });
