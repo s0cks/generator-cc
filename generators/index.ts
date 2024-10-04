@@ -61,6 +61,11 @@ export interface GenModuleConfig {
   executable?: boolean;
 }
 
+class CMakeModuleGenerator {
+  constructor(name: string, template_path) {
+  }
+};
+
 export default class extends Generator {
   private project_name_lower!: string;
   private source_prefix!: string;
@@ -293,37 +298,50 @@ export default class extends Generator {
     });
   }
 
-  #genModule(tpl: string, packages: PackageList, extra: GenModuleConfig = {}) {
-    this.log(`Generating ${chalk.cyan(tpl)} module....`);
-    const module_dir = path.join(process.cwd(), tpl);
-    if(!existsSync(module_dir))
-      mkdirSync(module_dir);
-    const project_name = this.options[`project_name`];
-    const module_name = `${project_name}-${tpl}`.toLowerCase();
-    this.fs.copyTpl(
-      this.templatePath(`${tpl}/_CMakeLists.txt`),
-      this.destinationPath(`${tpl}/CMakeLists.txt`),
-      {
-        ...this.cmake_ctx,
-        module_name: extra.module_name || module_name,
-        packages: packages,
-        executable: extra.executable || false,
+  #genCMakeModule(module_name: string, packages: PackageList, extra: GenModuleConfig = {}) {
+    this.log(`Generating ${chalk.cyan(module_name)} module....`);
+    {
+      const module_dir = this.destinationPath(module_name);
+      if(!existsSync(module_dir)) {
+        this.log(`Creating ${module_dir} directory....`);
+        mkdirSync(module_dir);
       }
-    );
-    const main_tpl = this.templatePath(path.join(tpl, `_main.cc`));
-    if(fs.existsSync(main_tpl)) {
-      this.log(`Generating ${chalk.cyan(`main.cc`)} for ${chalk.cyan(module_name)} module....`);
+    }
+    {
+      // project_name_lower/
+      const src_dir = this.destinationPath(path.join(module_name, this.project_name_lower)); // TODO: this should probably be source_prefix/
+      if(!fs.existsSync(src_dir)) {
+        this.log(`Creating ${chalk.gray(`source`)} directory for ${chalk.cyan(module_name)} module....`);
+        fs.mkdirSync(src_dir);
+      }
+    }
+    {
+      // CMakeLists.txt
       this.fs.copyTpl(
-        this.templatePath(main_tpl),
-        this.destinationPath(`${tpl}/main.cc`),
-        this.cpp_ctx,
+        this.templatePath(`${module_name}/_CMakeLists.txt`),
+        this.destinationPath(`${module_name}/CMakeLists.txt`),
+        {
+          ...this.cmake_ctx,
+          module_name: extra.module_name || module_name,
+          packages: packages,
+          executable: extra.executable || false,
+        }
       );
     }
-    const srcDir = this.destinationPath(path.join(tpl, this.project_name_lower));
-    if(!fs.existsSync(srcDir)) {
-      this.log(`Creating ${chalk.gray(`source`)} directory for ${chalk.cyan(module_name)} module....`);
-      fs.mkdirSync(srcDir);
+    {
+      // main.cc
+      const main_tpl = this.templatePath(path.join(module_name, `_main.cc`));
+      this.log(`main_tpl: ${main_tpl}`);
+      if(extra?.executable && fs.existsSync(main_tpl)) {
+        this.log(`Generating ${chalk.cyan(`main.cc`)} for ${chalk.cyan(module_name)} module....`);
+        this.fs.copyTpl(
+          main_tpl,
+          this.destinationPath(path.join(module_name, `main.cc`)),
+          this.cpp_ctx,
+        );
+      }
     }
+    this.log(`Generated ${chalk.cyan(module_name)} CMake module.`);
   }
 
   _copyCMakeScript(name: string) {
@@ -397,12 +415,6 @@ export default class extends Generator {
         dest: createDestFilename(`cc`),
       }
     ];
-    if(this.options[`executable`]) {
-      templates.push({
-        source: `_main.cc`,
-        dest: `main.cc`,
-      });
-    }
     if(this.options[`tests`]) {
       const test_name = `${this.options["project_name"]}Test`;
       const test_header_path = `${this.source_prefix}/test_${this.project_name_lower}.h`;
@@ -446,6 +458,13 @@ export default class extends Generator {
       {
         source: this.#getCMakeScriptPath(`Coverage`),
         dest: this.#getCMakeScriptPath(`Coverage`),
+        ctx: {
+          ...this.cmake_ctx,
+        }
+      },
+      {
+        source: this.#getCMakeScriptPath(`ClangTidy`),
+        dest: this.#getCMakeScriptPath(`ClangTidy`),
         ctx: {
           ...this.cmake_ctx,
         }
@@ -598,11 +617,11 @@ export default class extends Generator {
     this.#genBuildDirectory();
     if(this.options[`doxygen`])
       this.#genDoxygenConfig();
-    this.#genModule(`Sources`, this.#getDefaultPackages(), { module_name: this.project_name_lower });
+    this.#genCMakeModule(`Sources`, this.#getDefaultPackages(), { module_name: this.project_name_lower });
     if(this.options[`tests`])
-      this.#genModule(`Tests`, this.#getTestPackages(), { executable: true });
+      this.#genCMakeModule(`Tests`, this.#getTestPackages(), { executable: true });
     if(this.options[`benchmarks`])
-      this.#genModule(`Benchmarks`, this.#getBenchmarkPackages(), { executable: true });
+      this.#genCMakeModule(`Benchmarks`, this.#getBenchmarkPackages(), { executable: true });
     if(this.options[`vcpkg`])
       this.#genVcpkgConfig();
     if(this.options[`clang`])

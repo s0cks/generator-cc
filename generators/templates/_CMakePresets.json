@@ -50,7 +50,6 @@
     },
     {
       "name": "debug",
-      "hidden": true,
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": {
           "value": "Debug",
@@ -106,7 +105,7 @@
     {
       "name": "debug-darwin-arm64",
       "displayName": "Debug (Darwin/arm64)",
-      "configurePreset": "debug"
+      "configurePreset": "debug-darwin-arm64"
     },
     {
       "name": "release",

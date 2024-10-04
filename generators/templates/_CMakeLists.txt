@@ -78,10 +78,3 @@ option(ENABLE_BENCHMARKS "Enable benchmarks." ON)
 if(ENABLE_BENCHMARKS)
   add_subdirectory(Benchmarks)
 endif()
-
-<%_ if(executable) { %>
-add_executable(<%= project_name %>
-  main.cc)
-target_link_libraries(<%= project_name %>
-  <%= library_name -%>)
-<%_ } %>

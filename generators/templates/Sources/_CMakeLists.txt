@@ -25,3 +25,10 @@ target_compile_options(<%= library_name -%>
 target_include_directories(<%= library_name -%>
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
          ${CMAKE_CURRENT_BINARY_DIR})
+
+<%_ if(executable) { %>
+add_executable(<%= project_name %>
+  main.cc)
+target_link_libraries(<%= project_name %>
+  <%= library_name -%>)
+<%_ } %>
